@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { Calendar, Clock, Tag } from 'lucide-astro';
+import { getKeywordsForTags } from '../../utils/seo-keywords';
 
 export async function getStaticPaths() {
   const nuggets = await getCollection('nuggets', ({ data }) => {
@@ -25,6 +26,9 @@ const { Content } = await nugget.render();
 
 // Generate OG image path based on slug (can be customized later)
 const ogImage = `/og-images/${nugget.slug}.jpg`;
+
+// Get SEO keywords based on tags
+const articleKeywords = getKeywordsForTags(nugget.data.tags);
 ---
 
 <Layout 
@@ -32,8 +36,10 @@ const ogImage = `/og-images/${nugget.slug}.jpg`;
   description={nugget.data.summary}
   ogImage={ogImage}
   ogType="article"
+  keywords={articleKeywords}
   article={{
     publishedTime: nugget.data.date.toISOString(),
+    author: "Farhan Hasin Chowdhury",
     tags: nugget.data.tags
   }}
 >
