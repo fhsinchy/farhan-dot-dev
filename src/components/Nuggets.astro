@@ -38,19 +38,32 @@ const searchData = nuggets.map(nugget => ({
 
     <!-- Search Box -->
     <div class="mb-8">
-      <div class="relative">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search size={20} class="text-muted-foreground" />
+      <div class="flex items-center gap-4 mb-4">
+        <div class="flex-1 relative">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search size={20} class="text-muted-foreground" />
+          </div>
+          <input
+            type="text"
+            id="nugget-search"
+            placeholder="Search nuggets by title, tags, or content..."
+            class="w-full pl-12 pr-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            aria-label="Search nuggets"
+          />
         </div>
-        <input
-          type="text"
-          id="nugget-search"
-          placeholder="Search nuggets by title, tags, or content..."
-          class="w-full pl-12 pr-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-          aria-label="Search nuggets"
-        />
+        <a 
+          href="/nuggets/tags"
+          class="flex items-center gap-2 px-4 py-3 rounded-lg bg-muted border border-border text-foreground hover:border-primary hover:text-primary transition-all whitespace-nowrap"
+          aria-label="Browse all topics"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.828 2.828 0 0 0 4 0l7.172-7.172a2.828 2.828 0 0 0 0-4z"/>
+            <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>
+          </svg>
+          <span class="hidden sm:inline">Topics</span>
+        </a>
       </div>
-      <p id="search-results-count" class="mt-2 text-sm text-muted-foreground" role="status" aria-live="polite">
+      <p id="search-results-count" class="text-sm text-muted-foreground" role="status" aria-live="polite">
         Showing {nuggets.length} nugget{nuggets.length !== 1 ? 's' : ''}
       </p>
     </div>
@@ -64,18 +77,17 @@ const searchData = nuggets.map(nugget => ({
             data-slug={nugget.slug}
           >
             <div class="flex flex-wrap items-center gap-3 mb-3">
-              <button 
-                class={`tag-filter inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium transition-all hover:ring-2 hover:ring-primary cursor-pointer ${
+              <a 
+                href={`/nuggets/tags/${primaryTag}`}
+                class={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium transition-all hover:ring-2 hover:ring-primary ${
                   primaryTag === 'Backend' 
                     ? 'bg-primary border-transparent text-primary-foreground' 
                     : 'bg-accent border-transparent text-primary-foreground'
                 }`}
-                data-tag={primaryTag}
-                aria-label={`Filter by ${primaryTag}`}
-                type="button"
+                aria-label={`View all ${primaryTag} articles`}
               >
                 {primaryTag}
-              </button>
+              </a>
               <div class="flex items-center gap-4 text-sm text-muted-foreground">
                 <span class="flex items-center gap-1">
                   <Calendar size={14} />
@@ -133,7 +145,6 @@ const searchData = nuggets.map(nugget => ({
       const noResults = document.getElementById('no-results');
       const resultsCount = document.getElementById('search-results-count');
       const allCards = document.querySelectorAll('.nugget-card');
-      const tagButtons = document.querySelectorAll('.tag-filter');
 
       function updateResults(query) {
         if (!query.trim()) {
@@ -188,28 +199,6 @@ const searchData = nuggets.map(nugget => ({
             updateResults('');
           }
         });
-      }
-
-      // Handle tag clicks
-      tagButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const tag = button.getAttribute('data-tag');
-          if (searchInput) {
-            searchInput.value = tag;
-            updateResults(tag);
-            searchInput.focus();
-          }
-        });
-      });
-
-      // Check for tag parameter in URL on page load
-      const urlParams = new URLSearchParams(window.location.search);
-      const tagParam = urlParams.get('tag');
-      if (tagParam && searchInput) {
-        searchInput.value = tagParam;
-        updateResults(tagParam);
       }
     }).catch(err => {
       console.error('Failed to load Fuse.js:', err);

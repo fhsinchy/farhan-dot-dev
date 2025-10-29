@@ -89,9 +89,9 @@ const articleKeywords = getKeywordsForTags(nugget.data.tags);
           <div class="flex flex-wrap gap-2 mt-6">
             {nugget.data.tags.map((tag) => (
               <a 
-                href={`/nuggets?tag=${encodeURIComponent(tag)}`}
-                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-all cursor-pointer"
-                aria-label={`Filter nuggets by ${tag}`}
+                href={`/nuggets/tags/${tag}`}
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-all"
+                aria-label={`View all ${tag} articles`}
               >
                 <Tag size={12} />
                 {tag}
