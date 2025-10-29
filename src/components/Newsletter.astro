@@ -1,5 +1,8 @@
 ---
 import { Mail, Send } from 'lucide-astro';
+
+const newsletterApiUrl = import.meta.env.PUBLIC_NEWSLETTER_API_URL;
+const isConfigured = !!newsletterApiUrl;
 ---
 
 <section class="min-h-screen flex items-center justify-center py-20 px-6 pt-32">
@@ -68,21 +71,44 @@ import { Mail, Send } from 'lucide-astro';
   </div>
 </section>
 
-<script>
+<script define:vars={{ newsletterApiUrl, isConfigured }}>
   const form = document.getElementById('newsletter-form') as HTMLFormElement;
   const formContainer = document.getElementById('newsletter-form-container');
   const successMessage = document.getElementById('newsletter-success');
   const emailInput = document.getElementById('newsletter-email') as HTMLInputElement;
 
-  form?.addEventListener('submit', (e) => {
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // In production, this would connect to Buttondown/Substack API
-    formContainer?.classList.add('hidden');
-    successMessage?.classList.remove('hidden');
-    
-    if (emailInput) {
-      emailInput.value = '';
+    if (isConfigured && newsletterApiUrl) {
+      try {
+        // Make actual API call when configured
+        const response = await fetch(newsletterApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: emailInput.value,
+          }),
+        });
+
+        if (response.ok) {
+          formContainer?.classList.add('hidden');
+          successMessage?.classList.remove('hidden');
+          if (emailInput) emailInput.value = '';
+        } else {
+          alert('Subscription failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Newsletter subscription error:', error);
+        alert('An error occurred. Please try again later.');
+      }
+    } else {
+      // Demo mode - just show success message
+      formContainer?.classList.add('hidden');
+      successMessage?.classList.remove('hidden');
+      if (emailInput) emailInput.value = '';
     }
   });
 </script>

@@ -1,33 +1,40 @@
 ---
 import { Github, Linkedin, Mail, Twitter } from 'lucide-astro';
 
+const authorEmail = import.meta.env.PUBLIC_AUTHOR_EMAIL || 'hello@example.com';
+const githubUrl = import.meta.env.PUBLIC_GITHUB_URL || 'https://github.com';
+const linkedinUrl = import.meta.env.PUBLIC_LINKEDIN_URL || 'https://linkedin.com';
+const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || '@yourhandle';
+const twitterUrl = `https://twitter.com/${twitterHandle.replace('@', '')}`;
+const authorName = import.meta.env.PUBLIC_AUTHOR_NAME || 'Your Name';
+
 const contactMethods = [
   {
     icon: Mail,
     label: 'Email',
-    value: 'farhan@farhan.dev',
-    href: 'mailto:farhan@farhan.dev',
+    value: authorEmail,
+    href: `mailto:${authorEmail}`,
     description: 'For writing inquiries and collaborations',
   },
   {
     icon: Github,
     label: 'GitHub',
-    value: '@farhan',
-    href: 'https://github.com',
+    value: githubUrl.replace('https://github.com/', '@'),
+    href: githubUrl,
     description: 'Check out my open source work',
   },
   {
     icon: Linkedin,
     label: 'LinkedIn',
-    value: 'Farhan Hasin Chowdhury',
-    href: 'https://linkedin.com',
+    value: authorName,
+    href: linkedinUrl,
     description: 'Connect professionally',
   },
   {
     icon: Twitter,
     label: 'Twitter',
-    value: '@farhan',
-    href: 'https://twitter.com',
+    value: twitterHandle,
+    href: twitterUrl,
     description: 'Follow for daily insights',
   },
 ];

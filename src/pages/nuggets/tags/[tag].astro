@@ -1,0 +1,109 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { Calendar, Clock } from 'lucide-astro';
+
+export async function getStaticPaths() {
+  const allNuggets = await getCollection('nuggets', ({ data }) => {
+    return data.published !== false;
+  });
+
+  // Get unique tags
+  const allTags = [...new Set(allNuggets.flatMap(nugget => nugget.data.tags))];
+
+  return allTags.map(tag => {
+    const filteredNuggets = allNuggets
+      .filter(nugget => nugget.data.tags.includes(tag))
+      .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+    return {
+      params: { tag },
+      props: { tag, nuggets: filteredNuggets }
+    };
+  });
+}
+
+const { tag, nuggets } = Astro.props;
+---
+
+<Layout 
+  title={`${tag} Articles - Farhan Hasin Chowdhury`}
+  description={`All articles tagged with ${tag}. ${nuggets.length} post${nuggets.length !== 1 ? 's' : ''} found.`}
+>
+  <div class="min-h-screen bg-background text-foreground">
+    <Header />
+    
+    <main id="main-content">
+      <section class="py-20 px-6 pt-32">
+        <div class="max-w-4xl mx-auto">
+          <!-- Header -->
+          <div class="mb-12">
+            <a
+              href="/nuggets"
+              class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6"/>
+              </svg>
+              All Nuggets
+            </a>
+            
+            <h1 class="mb-4 text-foreground">{tag}</h1>
+            <p class="text-muted-foreground text-lg">
+              {nuggets.length} post{nuggets.length !== 1 ? 's' : ''} tagged with <span class="text-primary">{tag}</span>
+            </p>
+          </div>
+
+          <!-- Posts List -->
+          <div class="space-y-6">
+            {nuggets.map((nugget) => {
+              const primaryTag = nugget.data.tags[0];
+              return (
+                <a 
+                  href={`/nuggets/${nugget.slug}`}
+                  class="block p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
+                >
+                  <div class="flex flex-wrap items-center gap-3 mb-3">
+                    <span class={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium ${
+                      primaryTag === 'Backend' 
+                        ? 'bg-primary border-transparent text-primary-foreground' 
+                        : 'bg-accent border-transparent text-primary-foreground'
+                    }`}>
+                      {primaryTag}
+                    </span>
+                    <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span class="flex items-center gap-1">
+                        <Calendar size={14} />
+                        {nugget.data.date.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <Clock size={14} />
+                        {nugget.data.readTime}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <h3 class="mb-2 text-foreground group-hover:text-primary transition-colors">
+                    {nugget.data.title}
+                  </h3>
+                  
+                  <p class="text-muted-foreground">
+                    {nugget.data.summary}
+                  </p>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

@@ -1,12 +1,16 @@
 ---
 import { Heart } from 'lucide-astro';
+
+const siteName = import.meta.env.PUBLIC_SITE_NAME || 'farhan.dev';
+const githubUrl = import.meta.env.PUBLIC_GITHUB_URL || 'https://github.com';
+const currentYear = new Date().getFullYear();
 ---
 
 <footer class="border-t border-border py-8 px-6">
   <div class="max-w-6xl mx-auto">
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
       <div class="flex items-center gap-2">
-        <span>© 2025 farhan.dev</span>
+        <span>© {currentYear} {siteName}</span>
         <span>•</span>
         <span class="flex items-center gap-1">
           Built with <Heart size={14} class="text-primary" /> using Astro & Cloudflare
@@ -14,13 +18,13 @@ import { Heart } from 'lucide-astro';
       </div>
       
       <div class="flex items-center gap-6">
-        <a href="#" class="hover:text-primary transition-colors">
+        <a href="/rss.xml" class="hover:text-primary transition-colors">
           RSS Feed
         </a>
-        <a href="#" class="hover:text-primary transition-colors">
+        <a href="/privacy" class="hover:text-primary transition-colors">
           Privacy
         </a>
-        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">
+        <a href={githubUrl} target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">
           Source Code
         </a>
       </div>

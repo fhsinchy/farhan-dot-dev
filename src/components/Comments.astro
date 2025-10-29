@@ -1,0 +1,62 @@
+---
+// Giscus comments embed component
+// Reads configuration from public env variables. If not set, shows a setup hint.
+
+const repo = import.meta.env.PUBLIC_GISCUS_REPO;
+const repoId = import.meta.env.PUBLIC_GISCUS_REPO_ID;
+const category = import.meta.env.PUBLIC_GISCUS_CATEGORY;
+const categoryId = import.meta.env.PUBLIC_GISCUS_CATEGORY_ID;
+const mapping = import.meta.env.PUBLIC_GISCUS_MAPPING || 'pathname';
+const reactions = import.meta.env.PUBLIC_GISCUS_REACTIONS || '1';
+const emitMetadata = import.meta.env.PUBLIC_GISCUS_EMIT_METADATA || '0';
+const inputPosition = import.meta.env.PUBLIC_GISCUS_INPUT_POSITION || 'bottom';
+const lang = import.meta.env.PUBLIC_GISCUS_LANG || 'en';
+const theme = import.meta.env.PUBLIC_GISCUS_THEME || 'transparent_dark';
+
+const isConfigured = !!(repo && repoId && category && categoryId);
+---
+
+<section aria-labelledby="comments-title" class="mt-16">
+  <h2 id="comments-title" class="mb-4 text-foreground">Comments</h2>
+  {isConfigured ? (
+    <div class="giscus" id="giscus_thread">
+      <script
+        src="https://giscus.app/client.js"
+        data-repo={repo}
+        data-repo-id={repoId}
+        data-category={category}
+        data-category-id={categoryId}
+        data-mapping={mapping}
+        data-strict="0"
+        data-reactions-enabled={reactions}
+        data-emit-metadata={emitMetadata}
+        data-input-position={inputPosition}
+        data-theme={theme}
+        data-lang={lang}
+        crossorigin="anonymous"
+        async
+      />
+      <noscript class="text-sm text-muted-foreground">
+        Please enable JavaScript to view the
+        <a class="underline" href="https://giscus.app/">comments powered by Giscus</a>.
+      </noscript>
+    </div>
+  ) : (
+    <div class="rounded-lg border border-border bg-muted/30 p-4">
+      <p class="text-sm text-muted-foreground">
+        Giscus is not configured yet. Add the following variables to your <code>.env</code>:
+      </p>
+      <pre class="mt-3 text-xs overflow-x-auto"><code>{`PUBLIC_GISCUS_REPO=owner/repo
+PUBLIC_GISCUS_REPO_ID=...
+PUBLIC_GISCUS_CATEGORY=General
+PUBLIC_GISCUS_CATEGORY_ID=...
+# Optional overrides
+PUBLIC_GISCUS_THEME=transparent_dark
+PUBLIC_GISCUS_MAPPING=pathname
+PUBLIC_GISCUS_LANG=en`}</code></pre>
+      <p class="mt-2 text-xs text-muted-foreground">
+        Get values from giscus.app after installing the GitHub App and enabling Discussions.
+      </p>
+    </div>
+  )}
+</section>

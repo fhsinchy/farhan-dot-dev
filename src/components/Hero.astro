@@ -1,5 +1,10 @@
 ---
 import { ArrowRight, Github, Linkedin, Twitter } from 'lucide-astro';
+
+const githubUrl = import.meta.env.PUBLIC_GITHUB_URL || 'https://github.com';
+const linkedinUrl = import.meta.env.PUBLIC_LINKEDIN_URL || 'https://linkedin.com';
+const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || '@fhsinchy';
+const twitterUrl = `https://twitter.com/${twitterHandle.replace('@', '')}`;
 ---
 
 <main id="main-content">
@@ -38,7 +43,7 @@ import { ArrowRight, Github, Linkedin, Twitter } from 'lucide-astro';
 
     <div class="flex items-center justify-center gap-6">
       <a
-        href="https://github.com"
+        href={githubUrl}
         target="_blank"
         rel="noopener noreferrer"
         class="text-muted-foreground hover:text-primary transition-colors"
@@ -47,7 +52,7 @@ import { ArrowRight, Github, Linkedin, Twitter } from 'lucide-astro';
         <Github size={24} />
       </a>
       <a
-        href="https://linkedin.com"
+        href={linkedinUrl}
         target="_blank"
         rel="noopener noreferrer"
         class="text-muted-foreground hover:text-primary transition-colors"
@@ -56,7 +61,7 @@ import { ArrowRight, Github, Linkedin, Twitter } from 'lucide-astro';
         <Linkedin size={24} />
       </a>
       <a
-        href="https://twitter.com"
+        href={twitterUrl}
         target="_blank"
         rel="noopener noreferrer"
         class="text-muted-foreground hover:text-primary transition-colors"
