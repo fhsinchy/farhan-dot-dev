@@ -68,10 +68,14 @@ const { Content } = await nugget.render();
           <!-- Tags -->
           <div class="flex flex-wrap gap-2 mt-6">
             {nugget.data.tags.map((tag) => (
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+              <a 
+                href={`/nuggets?tag=${encodeURIComponent(tag)}`}
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-all cursor-pointer"
+                aria-label={`Filter nuggets by ${tag}`}
+              >
                 <Tag size={12} />
                 {tag}
-              </span>
+              </a>
             ))}
           </div>
         </header>

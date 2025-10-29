@@ -203,6 +203,14 @@ const searchData = nuggets.map(nugget => ({
           }
         });
       });
+
+      // Check for tag parameter in URL on page load
+      const urlParams = new URLSearchParams(window.location.search);
+      const tagParam = urlParams.get('tag');
+      if (tagParam && searchInput) {
+        searchInput.value = tagParam;
+        updateResults(tagParam);
+      }
     }).catch(err => {
       console.error('Failed to load Fuse.js:', err);
     });
