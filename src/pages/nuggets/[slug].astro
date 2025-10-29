@@ -22,9 +22,21 @@ type Props = {
 
 const { nugget } = Astro.props;
 const { Content } = await nugget.render();
+
+// Generate OG image path based on slug (can be customized later)
+const ogImage = `/og-images/${nugget.slug}.jpg`;
 ---
 
-<Layout title={`${nugget.data.title} - Farhan Hasin Chowdhury`} description={nugget.data.summary}>
+<Layout 
+  title={`${nugget.data.title} - Farhan Hasin Chowdhury`} 
+  description={nugget.data.summary}
+  ogImage={ogImage}
+  ogType="article"
+  article={{
+    publishedTime: nugget.data.date.toISOString(),
+    tags: nugget.data.tags
+  }}
+>
   <div class="min-h-screen bg-background text-foreground">
     <Header />
     
