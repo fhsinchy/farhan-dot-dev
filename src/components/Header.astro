@@ -1,0 +1,147 @@
+---
+import { Menu, X } from 'lucide-astro';
+---
+
+<header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+  <nav class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a
+      href="#hero"
+      class="text-foreground hover:text-primary transition-colors"
+    >
+      <span class="font-semibold">farhan.dev</span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <div class="hidden md:flex items-center gap-8">
+      <a
+        href="#hero"
+        class="nav-link transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Home
+      </a>
+      <a
+        href="#about"
+        class="nav-link transition-colors text-muted-foreground hover:text-foreground"
+      >
+        About
+      </a>
+      <a
+        href="#nuggets"
+        class="nav-link transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Nuggets
+      </a>
+      <a
+        href="#newsletter"
+        class="nav-link transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Newsletter
+      </a>
+      <a
+        href="#contact"
+        class="nav-link transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Contact
+      </a>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button
+      id="mobile-menu-button"
+      class="md:hidden text-foreground"
+      aria-label="Toggle mobile menu"
+    >
+      <Menu id="menu-icon" size={24} />
+      <X id="close-icon" size={24} class="hidden" />
+    </button>
+  </nav>
+
+  <!-- Mobile Navigation -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-border bg-background">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-4">
+      <a
+        href="#hero"
+        class="mobile-nav-link text-left transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Home
+      </a>
+      <a
+        href="#about"
+        class="mobile-nav-link text-left transition-colors text-muted-foreground hover:text-foreground"
+      >
+        About
+      </a>
+      <a
+        href="#nuggets"
+        class="mobile-nav-link text-left transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Nuggets
+      </a>
+      <a
+        href="#newsletter"
+        class="mobile-nav-link text-left transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Newsletter
+      </a>
+      <a
+        href="#contact"
+        class="mobile-nav-link text-left transition-colors text-muted-foreground hover:text-foreground"
+      >
+        Contact
+      </a>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Mobile menu toggle
+  const menuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const menuIcon = document.getElementById('menu-icon');
+  const closeIcon = document.getElementById('close-icon');
+  const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+  menuButton?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+    menuIcon?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
+  });
+
+  // Close mobile menu when link is clicked
+  mobileNavLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu?.classList.add('hidden');
+      menuIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+    });
+  });
+
+  // Active section highlighting
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  function updateActiveSection() {
+    const scrollPosition = window.scrollY + 200;
+
+    sections.forEach(section => {
+      const sectionTop = (section as HTMLElement).offsetTop;
+      const sectionHeight = (section as HTMLElement).offsetHeight;
+      const sectionId = section.getAttribute('id');
+
+      if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+        navLinks.forEach(link => {
+          link.classList.remove('text-primary');
+          link.classList.add('text-muted-foreground');
+          
+          if (link.getAttribute('href') === `#${sectionId}`) {
+            link.classList.add('text-primary');
+            link.classList.remove('text-muted-foreground');
+          }
+        });
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveSection);
+  window.addEventListener('load', updateActiveSection);
+</script>

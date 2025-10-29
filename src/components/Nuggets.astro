@@ -1,0 +1,99 @@
+---
+import { Calendar, Clock } from 'lucide-astro';
+
+const nuggets = [
+  {
+    id: '1',
+    title: 'Preventing Duplicate Jobs with Redis Locks',
+    excerpt: 'Why SET NX PX is your friend when building distributed task queues. A simple pattern that prevents race conditions and duplicate processing.',
+    category: 'Backend',
+    date: 'Oct 25, 2025',
+    readTime: '3 min',
+  },
+  {
+    id: '2',
+    title: 'RAG Systems: The Context Window Problem',
+    excerpt: 'How to handle large document sets when your LLM has a 4K token limit. Practical chunking strategies and retrieval optimization.',
+    category: 'AI',
+    date: 'Oct 22, 2025',
+    readTime: '4 min',
+  },
+  {
+    id: '3',
+    title: 'Idempotency Keys in Payment APIs',
+    excerpt: 'Never charge a customer twice. How to implement idempotency tokens in your payment processing pipeline.',
+    category: 'Backend',
+    date: 'Oct 18, 2025',
+    readTime: '3 min',
+  },
+  {
+    id: '4',
+    title: 'LLM Cost Control: Caching & Prefixes',
+    excerpt: 'Reduce OpenAI costs by 70% with prompt caching and smart prefix reuse. Real numbers from production systems.',
+    category: 'AI',
+    date: 'Oct 15, 2025',
+    readTime: '4 min',
+  },
+  {
+    id: '5',
+    title: 'Database Connection Pooling Done Right',
+    excerpt: 'Why max_connections matters and how to avoid the connection exhaustion death spiral in production.',
+    category: 'Backend',
+    date: 'Oct 11, 2025',
+    readTime: '3 min',
+  },
+  {
+    id: '6',
+    title: 'Schema Validation for LLM Outputs',
+    excerpt: 'Getting structured JSON from GPT-4 reliably. Using Pydantic and function calling for guaranteed output shapes.',
+    category: 'AI',
+    date: 'Oct 8, 2025',
+    readTime: '4 min',
+  },
+];
+---
+
+<section id="nuggets" class="min-h-screen py-20 px-6">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-12 text-center">
+      <h2 class="mb-4 text-foreground">Engineering Nuggets</h2>
+      <p class="text-muted-foreground text-lg">
+        Short, high-signal insights on backend and AI engineering. One core idea, code snippet, and takeaway.
+      </p>
+    </div>
+
+    <div class="space-y-6">
+      {nuggets.map((nugget) => (
+        <article class="p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all cursor-pointer group">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <span class={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium ${
+              nugget.category === 'Backend' 
+                ? 'bg-primary border-transparent text-primary-foreground' 
+                : 'bg-accent border-transparent text-primary-foreground'
+            }`}>
+              {nugget.category}
+            </span>
+            <div class="flex items-center gap-4 text-sm text-muted-foreground">
+              <span class="flex items-center gap-1">
+                <Calendar size={14} />
+                {nugget.date}
+              </span>
+              <span class="flex items-center gap-1">
+                <Clock size={14} />
+                {nugget.readTime}
+              </span>
+            </div>
+          </div>
+          
+          <h3 class="mb-2 text-foreground group-hover:text-primary transition-colors">
+            {nugget.title}
+          </h3>
+          
+          <p class="text-muted-foreground">
+            {nugget.excerpt}
+          </p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,85 @@
+---
+import { Github, Linkedin, Mail, Twitter } from 'lucide-astro';
+
+const contactMethods = [
+  {
+    icon: Mail,
+    label: 'Email',
+    value: 'farhan@farhan.dev',
+    href: 'mailto:farhan@farhan.dev',
+    description: 'For writing inquiries and collaborations',
+  },
+  {
+    icon: Github,
+    label: 'GitHub',
+    value: '@farhan',
+    href: 'https://github.com',
+    description: 'Check out my open source work',
+  },
+  {
+    icon: Linkedin,
+    label: 'LinkedIn',
+    value: 'Farhan Hasin Chowdhury',
+    href: 'https://linkedin.com',
+    description: 'Connect professionally',
+  },
+  {
+    icon: Twitter,
+    label: 'Twitter',
+    value: '@farhan',
+    href: 'https://twitter.com',
+    description: 'Follow for daily insights',
+  },
+];
+---
+
+<section id="contact" class="min-h-screen flex items-center justify-center py-20 px-6">
+  <div class="max-w-4xl mx-auto w-full">
+    <div class="text-center mb-12">
+      <h2 class="mb-4 text-foreground">Get in Touch</h2>
+      <p class="text-lg text-muted-foreground">
+        Open to technical writing opportunities, backend/AI consulting, and speaking engagements.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-12">
+      {contactMethods.map((method) => {
+        const Icon = method.icon;
+        return (
+          <a
+            href={method.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
+          >
+            <div class="flex items-start gap-4">
+              <div class="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <Icon size={24} />
+              </div>
+              <div class="flex-1">
+                <h4 class="mb-1 text-foreground">{method.label}</h4>
+                <p class="mb-2 text-primary">{method.value}</p>
+                <p class="text-sm text-muted-foreground">{method.description}</p>
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+
+    <div class="p-8 rounded-lg border border-border bg-muted/30 text-center">
+      <h3 class="mb-3 text-foreground">Looking for a Technical Writer?</h3>
+      <p class="mb-6 text-muted-foreground max-w-2xl mx-auto">
+        I write in-depth technical content on backend systems, AI/ML, and DevOps. 
+        Published on freeCodeCamp (500k+ views), MongoDB, Honeybadger, and Adeva.
+      </p>
+      <a
+        href="mailto:farhan@farhan.dev"
+        class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary hover:bg-accent text-primary-foreground transition-colors font-medium"
+      >
+        <Mail size={18} />
+        Discuss a Project
+      </a>
+    </div>
+  </div>
+</section>

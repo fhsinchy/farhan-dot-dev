@@ -1,0 +1,81 @@
+---
+import { BookOpen, Brain, Code2, FileText } from 'lucide-astro';
+
+const expertise = [
+  {
+    icon: Code2,
+    title: 'Backend Engineering',
+    description: 'System design, distributed systems, caching strategies, and API optimization.',
+  },
+  {
+    icon: Brain,
+    title: 'AI Engineering',
+    description: 'RAG systems, guardrails, schema validation, and cost-effective LLM deployment.',
+  },
+  {
+    icon: FileText,
+    title: 'Technical Writing',
+    description: 'Published on freeCodeCamp, MongoDB, Honeybadger, and Adeva.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Education',
+    description: 'Creating clear, practical content that helps developers build better systems.',
+  },
+];
+
+const publications = [
+  { name: 'freeCodeCamp', url: 'https://freecodecamp.org' },
+  { name: 'MongoDB', url: 'https://mongodb.com' },
+  { name: 'Honeybadger', url: 'https://honeybadger.io' },
+  { name: 'Adeva', url: 'https://adeva.com' },
+];
+---
+
+<section id="about" class="min-h-screen py-20 px-6">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="mb-12 text-foreground text-center">About</h2>
+    
+    <div class="mb-16">
+      <p class="mb-6 text-lg text-muted-foreground">
+        I'm a backend engineer with over seven years of experience building scalable systems 
+        and exploring the intersection of traditional backend engineering and AI. My work focuses 
+        on creating robust, production-ready solutions while sharing insights through technical writing.
+      </p>
+      <p class="mb-6 text-lg text-muted-foreground">
+        This site serves as my engineering notebook — a collection of practical insights, 
+        code patterns, and lessons learned from real-world systems. Each "Engineering Nugget" 
+        is a distilled piece of knowledge designed to save you time and improve your systems.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-16">
+      {expertise.map((item) => {
+        const Icon = item.icon;
+        return (
+          <div class="p-6 rounded-lg border border-border bg-muted/30 hover:border-primary/50 transition-colors">
+            <Icon class="mb-4 text-primary" size={32} />
+            <h3 class="mb-2 text-foreground">{item.title}</h3>
+            <p class="text-muted-foreground">{item.description}</p>
+          </div>
+        );
+      })}
+    </div>
+
+    <div>
+      <h3 class="mb-6 text-foreground">Published On</h3>
+      <div class="flex flex-wrap gap-4">
+        {publications.map((pub) => (
+          <a
+            href={pub.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-4 py-2 rounded-lg border border-border bg-muted/30 hover:border-primary transition-colors"
+          >
+            {pub.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
