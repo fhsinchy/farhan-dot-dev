@@ -46,7 +46,8 @@ const articleKeywords = getKeywordsForTags(nugget.data.tags);
   <div class="min-h-screen bg-background text-foreground">
     <Header />
     
-    <article class="py-20 px-6 pt-32">
+    <main id="main-content">
+      <article class="py-20 px-6 pt-32">
       <div class="max-w-3xl mx-auto">
         <!-- Back Link -->
         <a
@@ -138,6 +139,7 @@ const articleKeywords = getKeywordsForTags(nugget.data.tags);
         </footer>
       </div>
     </article>
+    </main>
 
     <Footer />
   </div>
