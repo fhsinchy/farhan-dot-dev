@@ -1,0 +1,2447 @@
+
+<!DOCTYPE html><html lang="en" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="description" content="Why SET NX PX is your friend when building distributed task queues. A simple pattern that prevents race conditions and duplicate processing."><meta name="viewport" content="width=device-width"><meta name="author" content="Farhan Hasin Chowdhury"><meta name="keywords" content="Software Development, Software Engineering, Technical Tutorial, Programming, Code Examples, Best Practices, Backend Engineering, Backend Development, Server-Side Programming, API Development, Microservices, Distributed Systems, System Design, Software Architecture, Redis, In-Memory Database, Caching, Key-Value Store, Distributed Locks, Redis Clustering"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="Astro v5.15.2"><link rel="canonical" href="https://farhan.dev/nuggets/redis-locks-without-regrets"><!-- Open Graph / Facebook / LinkedIn --><meta property="og:type" content="article"><meta property="og:url" content="https://farhan.dev/nuggets/redis-locks-without-regrets"><meta property="og:title" content="Preventing Duplicate Jobs with Redis Locks - Farhan Hasin Chowdhury"><meta property="og:description" content="Why SET NX PX is your friend when building distributed task queues. A simple pattern that prevents race conditions and duplicate processing."><meta property="og:image" content="https://farhan.dev/og-images/redis-locks-without-regrets.jpg"><meta property="og:image:alt" content="Preventing Duplicate Jobs with Redis Locks - Farhan Hasin Chowdhury"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:site_name" content="Farhan Hasin Chowdhury"><meta property="og:locale" content="en_US"><meta property="article:published_time" content="2025-10-25T00:00:00.000Z"><meta property="article:author" content="Farhan Hasin Chowdhury"><meta property="article:tag" content="Backend"><meta property="article:tag" content="Redis"><meta property="article:tag" content="Distributed Systems"><meta property="article:section" content="Technology"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:url" content="https://farhan.dev/nuggets/redis-locks-without-regrets"><meta name="twitter:title" content="Preventing Duplicate Jobs with Redis Locks - Farhan Hasin Chowdhury"><meta name="twitter:description" content="Why SET NX PX is your friend when building distributed task queues. A simple pattern that prevents race conditions and duplicate processing."><meta name="twitter:image" content="https://farhan.dev/og-images/redis-locks-without-regrets.jpg"><meta name="twitter:image:alt" content="Preventing Duplicate Jobs with Redis Locks - Farhan Hasin Chowdhury"><meta name="twitter:creator" content="@fhsinchy"><meta name="twitter:site" content="@fhsinchy"><!-- Additional SEO --><meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"><meta name="googlebot" content="index, follow"><meta name="theme-color" content="#0a0a0a"><!-- JSON-LD Structured Data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Preventing Duplicate Jobs with Redis Locks - Farhan Hasin Chowdhury","description":"Why SET NX PX is your friend when building distributed task queues. A simple pattern that prevents race conditions and duplicate processing.","image":"https://farhan.dev/og-images/redis-locks-without-regrets.jpg","author":{"@type":"Person","name":"Farhan Hasin Chowdhury","url":"https://farhan.dev"},"publisher":{"@type":"Person","name":"Farhan Hasin Chowdhury","logo":{"@type":"ImageObject","url":"https://farhan.dev/favicon.svg"}},"datePublished":"2025-10-25T00:00:00.000Z","dateModified":"2025-10-25T00:00:00.000Z","keywords":"Backend, Redis, Distributed Systems","mainEntityOfPage":{"@type":"WebPage","@id":"https://farhan.dev/nuggets/redis-locks-without-regrets"}}</script><!-- Fonts --><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><title>Preventing Duplicate Jobs with Redis Locks - Farhan Hasin Chowdhury</title><style data-vite-dev-id="D:/Projects/personal/farhan-dot-dev/node_modules/@astrojs/tailwind/base.css">*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.18 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  -o-tab-size: 4;
+     tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::-moz-placeholder, textarea::-moz-placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+.container {
+  width: 100%;
+}
+@media (min-width: 640px) {
+
+  .container {
+    max-width: 640px;
+  }
+}
+@media (min-width: 768px) {
+
+  .container {
+    max-width: 768px;
+  }
+}
+@media (min-width: 1024px) {
+
+  .container {
+    max-width: 1024px;
+  }
+}
+@media (min-width: 1280px) {
+
+  .container {
+    max-width: 1280px;
+  }
+}
+@media (min-width: 1536px) {
+
+  .container {
+    max-width: 1536px;
+  }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.inset-y-0 {
+  top: 0px;
+  bottom: 0px;
+}
+.left-0 {
+  left: 0px;
+}
+.right-0 {
+  right: 0px;
+}
+.top-0 {
+  top: 0px;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-16 {
+  margin-top: 4rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-6 {
+  margin-top: 1.5rem;
+}
+.mt-3 {
+  margin-top: 0.75rem;
+}
+.block {
+  display: block;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-16 {
+  height: 4rem;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-3xl {
+  max-width: 48rem;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.max-w-6xl {
+  max-width: 72rem;
+}
+.max-w-md {
+  max-width: 28rem;
+}
+.max-w-none {
+  max-width: none;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-1 {
+  gap: 0.25rem;
+}
+.gap-1\.5 {
+  gap: 0.375rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.overflow-x-auto {
+  overflow-x: auto;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-lg {
+  border-radius: var(--radius);
+}
+.rounded-md {
+  border-radius: calc(var(--radius) - 2px);
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-border {
+  border-color: var(--border);
+}
+.border-primary {
+  border-color: var(--primary);
+}
+.border-transparent {
+  border-color: transparent;
+}
+.bg-accent {
+  background-color: var(--accent);
+}
+.bg-background {
+  background-color: var(--background);
+}
+.bg-muted {
+  background-color: var(--muted);
+}
+.bg-primary {
+  background-color: var(--primary);
+}
+.bg-transparent {
+  background-color: transparent;
+}
+.p-3 {
+  padding: 0.75rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.p-4 {
+  padding: 1rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-0\.5 {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-1\.5 {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.py-20 {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.py-8 {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+.pl-12 {
+  padding-left: 3rem;
+}
+.pl-4 {
+  padding-left: 1rem;
+}
+.pr-4 {
+  padding-right: 1rem;
+}
+.pt-20 {
+  padding-top: 5rem;
+}
+.pt-32 {
+  padding-top: 8rem;
+}
+.pt-8 {
+  padding-top: 2rem;
+}
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.text-foreground {
+  color: var(--foreground);
+}
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+.text-primary {
+  color: var(--primary);
+}
+.text-primary-foreground {
+  color: var(--primary-foreground);
+}
+.underline {
+  text-decoration-line: underline;
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-blur {
+  --tw-backdrop-blur: blur(8px);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.backdrop-filter {
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.placeholder\:text-muted-foreground::-moz-placeholder {
+  color: var(--muted-foreground);
+}
+.placeholder\:text-muted-foreground::placeholder {
+  color: var(--muted-foreground);
+}
+.hover\:border-primary:hover {
+  border-color: var(--primary);
+}
+.hover\:bg-accent:hover {
+  background-color: var(--accent);
+}
+.hover\:bg-primary:hover {
+  background-color: var(--primary);
+}
+.hover\:text-foreground:hover {
+  color: var(--foreground);
+}
+.hover\:text-primary:hover {
+  color: var(--primary);
+}
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.hover\:ring-2:hover {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+.hover\:ring-primary:hover {
+  --tw-ring-color: var(--primary);
+}
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+.focus\:absolute:focus {
+  position: absolute;
+}
+.focus\:left-4:focus {
+  left: 1rem;
+}
+.focus\:top-4:focus {
+  top: 1rem;
+}
+.focus\:z-\[100\]:focus {
+  z-index: 100;
+}
+.focus\:rounded-md:focus {
+  border-radius: calc(var(--radius) - 2px);
+}
+.focus\:border-transparent:focus {
+  border-color: transparent;
+}
+.focus\:bg-primary:focus {
+  background-color: var(--primary);
+}
+.focus\:px-4:focus {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.focus\:py-2:focus {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.focus\:text-primary-foreground:focus {
+  color: var(--primary-foreground);
+}
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+.focus\:ring-primary:focus {
+  --tw-ring-color: var(--primary);
+}
+.focus\:ring-offset-2:focus {
+  --tw-ring-offset-width: 2px;
+}
+.group:hover .group-hover\:bg-primary {
+  background-color: var(--primary);
+}
+.group:hover .group-hover\:text-primary {
+  color: var(--primary);
+}
+.group:hover .group-hover\:text-primary-foreground {
+  color: var(--primary-foreground);
+}
+@media (min-width: 640px) {
+
+  .sm\:flex-row {
+    flex-direction: row;
+  }
+}
+@media (min-width: 768px) {
+
+  .md\:flex {
+    display: flex;
+  }
+
+  .md\:hidden {
+    display: none;
+  }
+
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:flex-row {
+    flex-direction: row;
+  }
+}
+</style>
+<style data-vite-dev-id="D:/Projects/personal/farhan-dot-dev/src/styles/globals.css">*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.18 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  -o-tab-size: 4;
+     tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::-moz-placeholder, textarea::-moz-placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+  :root {
+    --background: #0a0a0a;
+    --foreground: #e6e6e6;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --muted: #1a1a1a;
+    --muted-foreground: #a3a3a3;
+    --border: #262626;
+    --accent: #2563eb;
+    --radius: 0.5rem;
+  }
+
+  * {
+  border-color: var(--border);
+}
+  
+  body {
+  background-color: var(--background);
+  color: var(--foreground);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+  h2 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 600;
+  line-height: 1.375;
+  letter-spacing: -0.025em;
+}
+
+  h3 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+  h4 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  line-height: 1.625;
+}
+
+  p {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  line-height: 1.625;
+  color: var(--foreground);
+}
+
+  a {
+  color: var(--primary);
+  text-decoration-line: none;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+  a:hover {
+  color: var(--accent);
+}
+
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    border-radius: 0.25rem;
+    background-color: var(--muted);
+    padding-left: 0.375rem;
+    padding-right: 0.375rem;
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  pre {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border-width: 1px;
+  border-color: var(--border);
+  background-color: var(--muted);
+  padding: 1rem;
+}
+
+  pre code {
+  background-color: transparent;
+  padding: 0px;
+}
+
+  /* Enhanced focus visibility for accessibility */
+  *:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  --tw-ring-color: var(--primary);
+  --tw-ring-offset-width: 2px;
+  --tw-ring-offset-color: var(--background);
+}
+
+  /* Skip to content link - hidden by default, visible on focus */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+.container {
+  width: 100%;
+}
+@media (min-width: 640px) {
+
+  .container {
+    max-width: 640px;
+  }
+}
+@media (min-width: 768px) {
+
+  .container {
+    max-width: 768px;
+  }
+}
+@media (min-width: 1024px) {
+
+  .container {
+    max-width: 1024px;
+  }
+}
+@media (min-width: 1280px) {
+
+  .container {
+    max-width: 1280px;
+  }
+}
+@media (min-width: 1536px) {
+
+  .container {
+    max-width: 1536px;
+  }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.fixed {
+  position: fixed;
+}
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.inset-y-0 {
+  top: 0px;
+  bottom: 0px;
+}
+.left-0 {
+  left: 0px;
+}
+.right-0 {
+  right: 0px;
+}
+.top-0 {
+  top: 0px;
+}
+.z-50 {
+  z-index: 50;
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-12 {
+  margin-bottom: 3rem;
+}
+.mb-16 {
+  margin-bottom: 4rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
+}
+.mt-16 {
+  margin-top: 4rem;
+}
+.mt-2 {
+  margin-top: 0.5rem;
+}
+.mt-6 {
+  margin-top: 1.5rem;
+}
+.mt-3 {
+  margin-top: 0.75rem;
+}
+.block {
+  display: block;
+}
+.inline-block {
+  display: inline-block;
+}
+.flex {
+  display: flex;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.h-16 {
+  height: 4rem;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+.w-16 {
+  width: 4rem;
+}
+.w-full {
+  width: 100%;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-3xl {
+  max-width: 48rem;
+}
+.max-w-4xl {
+  max-width: 56rem;
+}
+.max-w-6xl {
+  max-width: 72rem;
+}
+.max-w-md {
+  max-width: 28rem;
+}
+.max-w-none {
+  max-width: none;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-1 {
+  gap: 0.25rem;
+}
+.gap-1\.5 {
+  gap: 0.375rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.gap-8 {
+  gap: 2rem;
+}
+.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.overflow-x-auto {
+  overflow-x: auto;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-lg {
+  border-radius: var(--radius);
+}
+.rounded-md {
+  border-radius: calc(var(--radius) - 2px);
+}
+.border {
+  border-width: 1px;
+}
+.border-b {
+  border-bottom-width: 1px;
+}
+.border-t {
+  border-top-width: 1px;
+}
+.border-border {
+  border-color: var(--border);
+}
+.border-primary {
+  border-color: var(--primary);
+}
+.border-transparent {
+  border-color: transparent;
+}
+.bg-accent {
+  background-color: var(--accent);
+}
+.bg-background {
+  background-color: var(--background);
+}
+.bg-muted {
+  background-color: var(--muted);
+}
+.bg-primary {
+  background-color: var(--primary);
+}
+.bg-transparent {
+  background-color: transparent;
+}
+.p-3 {
+  padding: 0.75rem;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
+}
+.p-4 {
+  padding: 1rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.py-0\.5 {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-1\.5 {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.py-20 {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.py-8 {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+.pl-12 {
+  padding-left: 3rem;
+}
+.pl-4 {
+  padding-left: 1rem;
+}
+.pr-4 {
+  padding-right: 1rem;
+}
+.pt-20 {
+  padding-top: 5rem;
+}
+.pt-32 {
+  padding-top: 8rem;
+}
+.pt-8 {
+  padding-top: 2rem;
+}
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.text-foreground {
+  color: var(--foreground);
+}
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+.text-primary {
+  color: var(--primary);
+}
+.text-primary-foreground {
+  color: var(--primary-foreground);
+}
+.underline {
+  text-decoration-line: underline;
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+.backdrop-blur {
+  --tw-backdrop-blur: blur(8px);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.backdrop-filter {
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.placeholder\:text-muted-foreground::-moz-placeholder {
+  color: var(--muted-foreground);
+}
+
+.placeholder\:text-muted-foreground::placeholder {
+  color: var(--muted-foreground);
+}
+
+.hover\:border-primary:hover {
+  border-color: var(--primary);
+}
+
+.hover\:bg-accent:hover {
+  background-color: var(--accent);
+}
+
+.hover\:bg-primary:hover {
+  background-color: var(--primary);
+}
+
+.hover\:text-foreground:hover {
+  color: var(--foreground);
+}
+
+.hover\:text-primary:hover {
+  color: var(--primary);
+}
+
+.hover\:text-white:hover {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
+.hover\:ring-2:hover {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+.hover\:ring-primary:hover {
+  --tw-ring-color: var(--primary);
+}
+
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+.focus\:absolute:focus {
+  position: absolute;
+}
+
+.focus\:left-4:focus {
+  left: 1rem;
+}
+
+.focus\:top-4:focus {
+  top: 1rem;
+}
+
+.focus\:z-\[100\]:focus {
+  z-index: 100;
+}
+
+.focus\:rounded-md:focus {
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.focus\:border-transparent:focus {
+  border-color: transparent;
+}
+
+.focus\:bg-primary:focus {
+  background-color: var(--primary);
+}
+
+.focus\:px-4:focus {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.focus\:py-2:focus {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.focus\:text-primary-foreground:focus {
+  color: var(--primary-foreground);
+}
+
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+.focus\:ring-primary:focus {
+  --tw-ring-color: var(--primary);
+}
+
+.focus\:ring-offset-2:focus {
+  --tw-ring-offset-width: 2px;
+}
+
+.group:hover .group-hover\:bg-primary {
+  background-color: var(--primary);
+}
+
+.group:hover .group-hover\:text-primary {
+  color: var(--primary);
+}
+
+.group:hover .group-hover\:text-primary-foreground {
+  color: var(--primary-foreground);
+}
+
+@media (min-width: 640px) {
+
+  .sm\:flex-row {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 768px) {
+
+  .md\:flex {
+    display: flex;
+  }
+
+  .md\:hidden {
+    display: none;
+  }
+
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:flex-row {
+    flex-direction: row;
+  }
+}
+</style>
+<style data-vite-dev-id="D:/Projects/personal/farhan-dot-dev/src/layouts/Layout.astro?astro&#38;type=style&#38;index=0&#38;lang.css">html,body{margin:0;width:100%;height:100%}</style><script type="module" src="/@vite/client"></script>
+<script type="module" src="/@fs/D:/Projects/personal/farhan-dot-dev/node_modules/astro/dist/runtime/client/dev-toolbar/entrypoint.js?v=6771cc98"></script>
+<script>window.__astro_dev_toolbar__ = {"root":"D:\\Projects\\personal\\farhan-dot-dev\\","version":"5.15.2","debugInfo":"Astro                    v5.15.2\nNode                     v22.21.0\nSystem                   Windows (x64)\nPackage Manager          npm\nOutput                   static\nAdapter                  none\nIntegrations             @astrojs/tailwind\n                         @astrojs/mdx\n                         @astrojs/sitemap"}</script>
+<script type="module" src="/node_modules/@astrojs/tailwind/base.css"></script>
+<script type="module" src="/src/styles/globals.css"></script>
+<script type="module" src="/src/layouts/Layout.astro?astro&type=style&index=0&lang.css"></script></head> <body data-astro-cid-sckkx6r4 data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/layouts/Layout.astro" data-astro-source-loc="132:8">  <div class="min-h-screen bg-background text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="47:59"> <!-- Skip to main content link for accessibility --><a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="17:2">
+Skip to main content
+</a> <header class="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="21:103"> <nav class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between" aria-label="Main navigation" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="22:107"> <a href="/" class="text-foreground hover:text-primary transition-colors" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="26:6"> <span class="font-semibold" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="27:35">farhan.dev</span> </a> <!-- Desktop Navigation --> <div class="hidden md:flex items-center gap-8" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="31:52"> <a href="/" class="transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="40:8">
+Home
+</a> <a href="/about" class="transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="51:8">
+About
+</a> <a href="/nuggets" class="transition-colors text-primary" aria-current="page" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="62:8">
+Nuggets
+</a> <a href="/newsletter" class="transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="73:8">
+Newsletter
+</a> <a href="/contact" class="transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="84:8">
+Contact
+</a> </div> <!-- Mobile Menu Button --> <button id="mobile-menu-button" class="md:hidden text-foreground" aria-label="Toggle mobile menu" aria-expanded="false" aria-controls="mobile-menu" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="96:6"> <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="24" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" id="menu-icon" class="lucide lucide-menu" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M4 5h16" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Menu.astro" data-astro-source-loc="7:3"></path> <path d="M4 12h16" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Menu.astro" data-astro-source-loc="8:3"></path> <path d="M4 19h16" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Menu.astro" data-astro-source-loc="9:3"></path>  </svg> <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="24" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" id="close-icon" class="lucide lucide-x hidden" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M18 6 6 18" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/X.astro" data-astro-source-loc="7:3"></path> <path d="m6 6 12 12" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/X.astro" data-astro-source-loc="8:3"></path>  </svg> </button> </nav> <!-- Mobile Navigation --> <div id="mobile-menu" class="hidden md:hidden border-t border-border bg-background" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="103:87"> <div class="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-4" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="104:66"> <a href="/" class="text-left transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="113:8">
+Home
+</a> <a href="/about" class="text-left transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="124:8">
+About
+</a> <a href="/nuggets" class="text-left transition-colors text-primary" aria-current="page" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="135:8">
+Nuggets
+</a> <a href="/newsletter" class="text-left transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="146:8">
+Newsletter
+</a> <a href="/contact" class="text-left transition-colors text-muted-foreground hover:text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Header.astro" data-astro-source-loc="157:8">
+Contact
+</a> </div> </div> </header> <script type="module" src="/src/components/Header.astro?astro&type=script&index=0&lang.ts"></script> <main id="main-content" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="50:29"> <article class="py-20 px-6 pt-32" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="51:41"> <div class="max-w-3xl mx-auto" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="52:38"> <!-- Back Link --> <a href="/nuggets" class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="57:10"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="58:192"> <path d="m15 18-6-6 6-6" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="59:14"></path> </svg>
+Back to Nuggets
+</a> <!-- Post Header --> </div></article> <!-- Comments --> <div class="max-w-3xl mx-auto px-6" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="68:41"> <section aria-labelledby="comments-title" class="mt-16" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="19:57"> <h2 id="comments-title" class="mb-4 text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="20:56">Comments</h2> <div class="giscus" id="giscus_thread" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="22:44"> <script src="https://giscus.app/client.js" data-repo="fhsinchy/farhan-dot-dev-discussion" data-repo-id="R_kgDOQLmBqQ" data-category="General" data-category-id="DIC_kwDOQLmBqc4CxOX-" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="transparent_dark" data-lang="en" crossorigin="anonymous" async></script> <noscript class="text-sm text-muted-foreground">
+Please enable JavaScript to view the
+<a class="underline" href="https://giscus.app/" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="41:57">comments powered by Giscus</a>.
+</noscript> </div> </section> </div> <h1 class="mb-4 text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="71:44">Preventing Duplicate Jobs with Redis Locks</h1> <p class="mb-6 text-xl text-muted-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="73:57"> Why SET NX PX is your friend when building distributed task queues. A simple pattern that prevents race conditions and duplicate processing. </p> <!-- Meta Information --> <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="78:88"> <span class="flex items-center gap-1.5" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="79:53"> <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="16" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" class="lucide lucide-calendar" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M8 2v4" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Calendar.astro" data-astro-source-loc="7:3"></path> <path d="M16 2v4" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Calendar.astro" data-astro-source-loc="8:3"></path> <rect width="18" height="18" x="3" y="4" rx="2" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Calendar.astro" data-astro-source-loc="9:3"></rect> <path d="M3 10h18" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Calendar.astro" data-astro-source-loc="10:3"></path>  </svg> Oct 25, 2025 </span> <span class="flex items-center gap-1.5" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="87:53"> <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="16" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" class="lucide lucide-clock" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M12 6v6l4 2" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Clock.astro" data-astro-source-loc="7:3"></path> <circle cx="12" cy="12" r="10" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Clock.astro" data-astro-source-loc="8:3"></circle>  </svg> 3 min </span> </div> <!-- Tags --> <div class="flex flex-wrap gap-2 mt-6" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="94:50"> <a href="/nuggets?tag=Backend" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-all cursor-pointer" aria-label="Filter nuggets by Backend" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="100:16"> <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="12" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" class="lucide lucide-tag" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Tag.astro" data-astro-source-loc="7:3"></path> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Tag.astro" data-astro-source-loc="8:3"></circle>  </svg> Backend </a><a href="/nuggets?tag=Redis" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-all cursor-pointer" aria-label="Filter nuggets by Redis" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="100:16"> <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="12" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" class="lucide lucide-tag" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Tag.astro" data-astro-source-loc="7:3"></path> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Tag.astro" data-astro-source-loc="8:3"></circle>  </svg> Redis </a><a href="/nuggets?tag=Distributed%20Systems" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-all cursor-pointer" aria-label="Filter nuggets by Distributed Systems" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="100:16"> <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="12" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" class="lucide lucide-tag" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Tag.astro" data-astro-source-loc="7:3"></path> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Tag.astro" data-astro-source-loc="8:3"></circle>  </svg> Distributed Systems </a> </div> <!-- Post Content --> <div class="prose prose-invert prose-lg max-w-none
+          prose-headings:font-semibold prose-headings:text-foreground
+          prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
+          prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
+          prose-p:text-muted-foreground prose-p:leading-relaxed
+          prose-a:text-primary prose-a:no-underline hover:prose-a:text-accent
+          prose-strong:text-foreground prose-strong:font-semibold
+          prose-code:text-sm prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+          prose-pre:bg-muted prose-pre:border prose-pre:border-border
+          prose-ul:text-muted-foreground prose-ol:text-muted-foreground
+          prose-li:marker:text-primary
+          prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground
+        " data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="121:11"> <h2 id="the-problem">The Problem</h2>
+<p>You’re running multiple workers processing jobs from a queue. Two workers grab the same job. Now you’ve processed the same task twice—sent duplicate emails, charged a customer twice, or worse.</p>
+<h2 id="redis-to-the-rescue">Redis to the Rescue</h2>
+<p>Redis provides atomic operations that solve this elegantly. The key is <code>SET</code> with the <code>NX</code> (Not eXists) and <code>PX</code> (milliseconds) flags.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="python"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> redis</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> time</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">redis_client </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> redis.Redis(</span><span style="color:#FFAB70">host</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">&#39;localhost&#39;</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">port</span><span style="color:#F97583">=</span><span style="color:#79B8FF">6379</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">db</span><span style="color:#F97583">=</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> acquire_lock</span><span style="color:#E1E4E8">(job_id, timeout_ms</span><span style="color:#F97583">=</span><span style="color:#79B8FF">30000</span><span style="color:#E1E4E8">):</span></span>
+<span class="line"><span style="color:#9ECBFF">    &quot;&quot;&quot;</span></span>
+<span class="line"><span style="color:#9ECBFF">    Try to acquire a lock for a job.</span></span>
+<span class="line"><span style="color:#9ECBFF">    Returns True if lock acquired, False otherwise.</span></span>
+<span class="line"><span style="color:#9ECBFF">    &quot;&quot;&quot;</span></span>
+<span class="line"><span style="color:#E1E4E8">    lock_key </span><span style="color:#F97583">=</span><span style="color:#F97583"> f</span><span style="color:#9ECBFF">&quot;lock:job:</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">job_id</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">&quot;</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#6A737D">    # SET NX PX - Set if Not eXists, with millisecond expiration</span></span>
+<span class="line"><span style="color:#E1E4E8">    acquired </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> redis_client.set(</span></span>
+<span class="line"><span style="color:#E1E4E8">        lock_key,</span></span>
+<span class="line"><span style="color:#9ECBFF">        &quot;1&quot;</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#FFAB70">        nx</span><span style="color:#F97583">=</span><span style="color:#79B8FF">True</span><span style="color:#E1E4E8">,  </span><span style="color:#6A737D"># Only set if key doesn&#39;t exist</span></span>
+<span class="line"><span style="color:#FFAB70">        px</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">timeout_ms  </span><span style="color:#6A737D"># Expire after 30 seconds</span></span>
+<span class="line"><span style="color:#E1E4E8">    )</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> acquired </span><span style="color:#F97583">is</span><span style="color:#F97583"> not</span><span style="color:#79B8FF"> None</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> release_lock</span><span style="color:#E1E4E8">(job_id):</span></span>
+<span class="line"><span style="color:#9ECBFF">    &quot;&quot;&quot;</span></span>
+<span class="line"><span style="color:#9ECBFF">    Release the lock when job completes.</span></span>
+<span class="line"><span style="color:#9ECBFF">    &quot;&quot;&quot;</span></span>
+<span class="line"><span style="color:#E1E4E8">    lock_key </span><span style="color:#F97583">=</span><span style="color:#F97583"> f</span><span style="color:#9ECBFF">&quot;lock:job:</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">job_id</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">&quot;</span></span>
+<span class="line"><span style="color:#E1E4E8">    redis_client.delete(lock_key)</span></span></code></pre>
+<h2 id="complete-worker-pattern">Complete Worker Pattern</h2>
+<p>Here’s how to build a worker that safely processes jobs:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="python"><code><span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> process_job_safely</span><span style="color:#E1E4E8">(job_id, job_data):</span></span>
+<span class="line"><span style="color:#6A737D">    # Try to acquire lock</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#F97583"> not</span><span style="color:#E1E4E8"> acquire_lock(job_id):</span></span>
+<span class="line"><span style="color:#79B8FF">        print</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">f</span><span style="color:#9ECBFF">&quot;Job </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">job_id</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF"> already being processed, skipping&quot;</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> False</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    try</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#6A737D">        # Do the actual work</span></span>
+<span class="line"><span style="color:#E1E4E8">        result </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> do_expensive_work(job_data)</span></span>
+<span class="line"><span style="color:#E1E4E8">        </span></span>
+<span class="line"><span style="color:#6A737D">        # Mark job as complete</span></span>
+<span class="line"><span style="color:#E1E4E8">        mark_job_complete(job_id, result)</span></span>
+<span class="line"><span style="color:#E1E4E8">        </span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> True</span></span>
+<span class="line"><span style="color:#F97583">    except</span><span style="color:#79B8FF"> Exception</span><span style="color:#F97583"> as</span><span style="color:#E1E4E8"> e:</span></span>
+<span class="line"><span style="color:#79B8FF">        print</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">f</span><span style="color:#9ECBFF">&quot;Error processing job </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">job_id</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">: </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">e</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">&quot;</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#6A737D">        # Lock will auto-expire, allowing retry</span></span>
+<span class="line"><span style="color:#F97583">        raise</span></span>
+<span class="line"><span style="color:#F97583">    finally</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#6A737D">        # Always release the lock</span></span>
+<span class="line"><span style="color:#E1E4E8">        release_lock(job_id)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> do_expensive_work</span><span style="color:#E1E4E8">(job_data):</span></span>
+<span class="line"><span style="color:#6A737D">    # Simulate work</span></span>
+<span class="line"><span style="color:#E1E4E8">    time.sleep(</span><span style="color:#79B8FF">5</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> {</span><span style="color:#9ECBFF">&quot;status&quot;</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">&quot;success&quot;</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">&quot;data&quot;</span><span style="color:#E1E4E8">: job_data}</span></span></code></pre>
+<h2 id="why-this-works">Why This Works</h2>
+<h3 id="1-atomic-operation">1. Atomic Operation</h3>
+<p><code>SET NX PX</code> is a single atomic command. No race condition between check and set.</p>
+<p>❌ <strong>Bad (Race Condition)</strong>:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D"># DON&#39;T DO THIS</span></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#F97583"> not</span><span style="color:#E1E4E8"> redis_client.exists(lock_key):  </span><span style="color:#6A737D"># Check</span></span>
+<span class="line"><span style="color:#E1E4E8">    redis_client.set(lock_key, </span><span style="color:#9ECBFF">&quot;1&quot;</span><span style="color:#E1E4E8">)     </span><span style="color:#6A737D"># Set (race here!)</span></span></code></pre>
+<p>✅ <strong>Good (Atomic)</strong>:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D"># DO THIS</span></span>
+<span class="line"><span style="color:#E1E4E8">redis_client.set(lock_key, </span><span style="color:#9ECBFF">&quot;1&quot;</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">nx</span><span style="color:#F97583">=</span><span style="color:#79B8FF">True</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">px</span><span style="color:#F97583">=</span><span style="color:#79B8FF">30000</span><span style="color:#E1E4E8">)</span></span></code></pre>
+<h3 id="2-auto-expiration">2. Auto-Expiration</h3>
+<p>The <code>PX</code> flag means locks auto-expire if a worker crashes. No manual cleanup needed.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D"># Lock expires automatically after 30 seconds</span></span>
+<span class="line"><span style="color:#6A737D"># Even if worker dies mid-job</span></span>
+<span class="line"><span style="color:#E1E4E8">acquired </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> redis_client.set(lock_key, </span><span style="color:#9ECBFF">&quot;1&quot;</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">nx</span><span style="color:#F97583">=</span><span style="color:#79B8FF">True</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">px</span><span style="color:#F97583">=</span><span style="color:#79B8FF">30000</span><span style="color:#E1E4E8">)</span></span></code></pre>
+<h3 id="3-idempotent-operations">3. Idempotent Operations</h3>
+<p>Combine with idempotency keys for bulletproof duplicate prevention:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="python"><code><span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> process_job_with_idempotency</span><span style="color:#E1E4E8">(job_id, job_data, idempotency_key):</span></span>
+<span class="line"><span style="color:#6A737D">    # Check if already processed</span></span>
+<span class="line"><span style="color:#E1E4E8">    result_key </span><span style="color:#F97583">=</span><span style="color:#F97583"> f</span><span style="color:#9ECBFF">&quot;result:</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">idempotency_key</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">&quot;</span></span>
+<span class="line"><span style="color:#E1E4E8">    cached_result </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> redis_client.get(result_key)</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> cached_result:</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#E1E4E8"> json.loads(cached_result)</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#6A737D">    # Acquire lock</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#F97583"> not</span><span style="color:#E1E4E8"> acquire_lock(job_id):</span></span>
+<span class="line"><span style="color:#6A737D">        # Wait and check for result</span></span>
+<span class="line"><span style="color:#E1E4E8">        time.sleep(</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#E1E4E8"> redis_client.get(result_key)</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    try</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#E1E4E8">        result </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> do_expensive_work(job_data)</span></span>
+<span class="line"><span style="color:#E1E4E8">        </span></span>
+<span class="line"><span style="color:#6A737D">        # Cache result for 24 hours</span></span>
+<span class="line"><span style="color:#E1E4E8">        redis_client.setex(</span></span>
+<span class="line"><span style="color:#E1E4E8">            result_key,</span></span>
+<span class="line"><span style="color:#79B8FF">            86400</span><span style="color:#E1E4E8">,  </span><span style="color:#6A737D"># 24 hours</span></span>
+<span class="line"><span style="color:#E1E4E8">            json.dumps(result)</span></span>
+<span class="line"><span style="color:#E1E4E8">        )</span></span>
+<span class="line"><span style="color:#E1E4E8">        </span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#E1E4E8"> result</span></span>
+<span class="line"><span style="color:#F97583">    finally</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#E1E4E8">        release_lock(job_id)</span></span></code></pre>
+<h2 id="advanced-extending-lock-time">Advanced: Extending Lock Time</h2>
+<p>For long-running jobs, extend the lock periodically:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="python"><code><span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> threading</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> extend_lock_periodically</span><span style="color:#E1E4E8">(job_id, interval_sec</span><span style="color:#F97583">=</span><span style="color:#79B8FF">10</span><span style="color:#E1E4E8">):</span></span>
+<span class="line"><span style="color:#9ECBFF">    &quot;&quot;&quot;</span></span>
+<span class="line"><span style="color:#9ECBFF">    Background thread that extends lock every N seconds.</span></span>
+<span class="line"><span style="color:#9ECBFF">    &quot;&quot;&quot;</span></span>
+<span class="line"><span style="color:#E1E4E8">    lock_key </span><span style="color:#F97583">=</span><span style="color:#F97583"> f</span><span style="color:#9ECBFF">&quot;lock:job:</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">job_id</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">&quot;</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    def</span><span style="color:#B392F0"> extend</span><span style="color:#E1E4E8">():</span></span>
+<span class="line"><span style="color:#F97583">        while</span><span style="color:#E1E4E8"> redis_client.exists(lock_key):</span></span>
+<span class="line"><span style="color:#E1E4E8">            redis_client.expire(lock_key, </span><span style="color:#79B8FF">30</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">            time.sleep(interval_sec)</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#E1E4E8">    thread </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> threading.Thread(</span><span style="color:#FFAB70">target</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">extend, </span><span style="color:#FFAB70">daemon</span><span style="color:#F97583">=</span><span style="color:#79B8FF">True</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">    thread.start()</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> thread</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> process_long_job</span><span style="color:#E1E4E8">(job_id, job_data):</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#F97583"> not</span><span style="color:#E1E4E8"> acquire_lock(job_id, </span><span style="color:#FFAB70">timeout_ms</span><span style="color:#F97583">=</span><span style="color:#79B8FF">30000</span><span style="color:#E1E4E8">):</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> False</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#6A737D">    # Start background lock extension</span></span>
+<span class="line"><span style="color:#E1E4E8">    extender </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> extend_lock_periodically(job_id)</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"><span style="color:#F97583">    try</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#6A737D">        # Long-running work here</span></span>
+<span class="line"><span style="color:#E1E4E8">        result </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> process_for_5_minutes(job_data)</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#E1E4E8"> result</span></span>
+<span class="line"><span style="color:#F97583">    finally</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#E1E4E8">        release_lock(job_id)</span></span></code></pre>
+<h2 id="production-checklist">Production Checklist</h2>
+<ul>
+<li>✅ Use <code>SET NX PX</code> for atomic lock acquisition</li>
+<li>✅ Set reasonable timeout (job duration + buffer)</li>
+<li>✅ Always use try/finally to release locks</li>
+<li>✅ Log lock acquisition failures</li>
+<li>✅ Monitor lock timeout metrics</li>
+<li>✅ For long jobs, extend locks periodically</li>
+<li>✅ Combine with idempotency for extra safety</li>
+</ul>
+<h2 id="the-takeaway">The Takeaway</h2>
+<p>Redis locks are simple, fast, and reliable. <code>SET NX PX</code> gives you atomic lock acquisition with auto-expiration in one command.</p>
+<p><strong>Pattern</strong>: Acquire lock → Process job → Release lock. Let expiration handle crashed workers.</p> </div> <!-- Post Footer --> <footer class="mt-16 pt-8 border-t border-border" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="126:59"> <div class="flex flex-col sm:flex-row items-center justify-between gap-4" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="127:85"> <a href="/nuggets" class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="131:14"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="132:196"> <path d="m15 18-6-6 6-6" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="133:18"></path> </svg>
+All Nuggets
+</a> <a href="/newsletter" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-accent hover:text-white transition-colors font-medium text-sm" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/pages/nuggets/[slug].astro" data-astro-source-loc="141:14">
+Get weekly nuggets via email
+</a> </div> </footer> <!-- Comments --> <section aria-labelledby="comments-title" class="mt-16" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="19:57"> <h2 id="comments-title" class="mb-4 text-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="20:56">Comments</h2> <div class="giscus" id="giscus_thread" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="22:44"> <script src="https://giscus.app/client.js" data-repo="fhsinchy/farhan-dot-dev-discussion" data-repo-id="R_kgDOQLmBqQ" data-category="General" data-category-id="DIC_kwDOQLmBqc4CxOX-" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="transparent_dark" data-lang="en" crossorigin="anonymous" async></script> <noscript class="text-sm text-muted-foreground">
+Please enable JavaScript to view the
+<a class="underline" href="https://giscus.app/" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Comments.astro" data-astro-source-loc="41:57">comments powered by Giscus</a>.
+</noscript> </div> </section> </main></div> <footer class="border-t border-border py-8 px-6" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="5:50"> <div class="max-w-6xl mx-auto" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="6:34"> <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="7:109"> <div class="flex items-center gap-2" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="8:44"> <span data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="9:15">© 2025 farhan.dev</span> <span data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="10:15">•</span> <span class="flex items-center gap-1" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="11:47">
+Built with <svg xmlns="http://www.w3.org/2000/svg" stroke-width="2" width="14" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none" viewBox="0 0 24 24" class="lucide lucide-heart text-primary" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/.Layout.astro" data-astro-source-loc="26:76">  <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/node_modules/lucide-astro/dist/Heart.astro" data-astro-source-loc="7:3"></path>  </svg> using Astro & Cloudflare
+</span> </div> <div class="flex items-center gap-6" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="16:44"> <a href="#" class="hover:text-primary transition-colors" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="17:66">
+RSS Feed
+</a> <a href="#" class="hover:text-primary transition-colors" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="20:66">
+Privacy
+</a> <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors" data-astro-source-file="D:/Projects/personal/farhan-dot-dev/src/components/Footer.astro" data-astro-source-loc="23:125">
+Source Code
+</a> </div> </div> </div> </footer>  </body></html>

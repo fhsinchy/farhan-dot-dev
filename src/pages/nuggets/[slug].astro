@@ -49,26 +49,21 @@ const articleKeywords = getKeywordsForTags(nugget.data.tags);
     
     <main id="main-content">
       <article class="py-20 px-6 pt-32">
-      <div class="max-w-3xl mx-auto">
-        <!-- Back Link -->
-        <a
-          href="/nuggets"
-          class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          Back to Nuggets
-        </a>
+        <div class="max-w-3xl mx-auto">
+          <!-- Back Link -->
+          <a
+            href="/nuggets"
+            class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            Back to Nuggets
+          </a>
 
-        <!-- Post Header -->
-    </article>
-
-    <!-- Comments -->
-    <div class="max-w-3xl mx-auto px-6">
-      <Comments />
-    </div>
-          <h1 class="mb-4 text-foreground">{nugget.data.title}</h1>
+          <!-- Post Header -->
+          <header class="mb-12">
+            <h1 class="mb-4 text-foreground">{nugget.data.title}</h1>
           
           <p class="mb-6 text-xl text-muted-foreground">
             {nugget.data.summary}
@@ -143,6 +138,9 @@ const articleKeywords = getKeywordsForTags(nugget.data.tags);
             </a>
           </div>
         </footer>
+
+        <!-- Comments -->
+        <Comments />
       </div>
     </article>
     </main>
