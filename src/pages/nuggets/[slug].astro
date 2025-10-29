@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { Calendar, Clock, Tag } from 'lucide-astro';
+import Comments from '../../components/Comments.astro';
 import { getKeywordsForTags } from '../../utils/seo-keywords';
 
 export async function getStaticPaths() {
@@ -61,7 +62,12 @@ const articleKeywords = getKeywordsForTags(nugget.data.tags);
         </a>
 
         <!-- Post Header -->
-        <header class="mb-12">
+    </article>
+
+    <!-- Comments -->
+    <div class="max-w-3xl mx-auto px-6">
+      <Comments />
+    </div>
           <h1 class="mb-4 text-foreground">{nugget.data.title}</h1>
           
           <p class="mb-6 text-xl text-muted-foreground">
