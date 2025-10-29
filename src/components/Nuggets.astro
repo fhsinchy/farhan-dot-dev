@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import { Calendar, Clock } from 'lucide-astro';
+import { Calendar, Clock, Search } from 'lucide-astro';
 
 // Get all published nuggets, sorted by date (newest first)
 const allNuggets = await getCollection('nuggets', ({ data }) => {
@@ -10,6 +10,21 @@ const allNuggets = await getCollection('nuggets', ({ data }) => {
 const nuggets = allNuggets.sort((a, b) => {
   return b.data.date.getTime() - a.data.date.getTime();
 });
+
+// Prepare data for client-side search
+const searchData = nuggets.map(nugget => ({
+  slug: nugget.slug,
+  title: nugget.data.title,
+  summary: nugget.data.summary,
+  tags: nugget.data.tags,
+  date: nugget.data.date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  }),
+  readTime: nugget.data.readTime,
+  primaryTag: nugget.data.tags[0],
+}));
 ---
 
 <section class="py-20 px-6 pt-32">
@@ -21,22 +36,46 @@ const nuggets = allNuggets.sort((a, b) => {
       </p>
     </div>
 
-    <div class="space-y-6">
+    <!-- Search Box -->
+    <div class="mb-8">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <Search size={20} class="text-muted-foreground" />
+        </div>
+        <input
+          type="text"
+          id="nugget-search"
+          placeholder="Search nuggets by title, tags, or content..."
+          class="w-full pl-12 pr-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          aria-label="Search nuggets"
+        />
+      </div>
+      <p id="search-results-count" class="mt-2 text-sm text-muted-foreground" role="status" aria-live="polite">
+        Showing {nuggets.length} nugget{nuggets.length !== 1 ? 's' : ''}
+      </p>
+    </div>
+
+    <div id="nuggets-list" class="space-y-6">
       {nuggets.map((nugget) => {
         const primaryTag = nugget.data.tags[0];
         return (
-          <a 
-            href={`/nuggets/${nugget.slug}`}
-            class="block p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
+          <div 
+            class="nugget-card p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
+            data-slug={nugget.slug}
           >
             <div class="flex flex-wrap items-center gap-3 mb-3">
-              <span class={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium ${
-                primaryTag === 'Backend' 
-                  ? 'bg-primary border-transparent text-primary-foreground' 
-                  : 'bg-accent border-transparent text-primary-foreground'
-              }`}>
+              <button 
+                class={`tag-filter inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium transition-all hover:ring-2 hover:ring-primary cursor-pointer ${
+                  primaryTag === 'Backend' 
+                    ? 'bg-primary border-transparent text-primary-foreground' 
+                    : 'bg-accent border-transparent text-primary-foreground'
+                }`}
+                data-tag={primaryTag}
+                aria-label={`Filter by ${primaryTag}`}
+                type="button"
+              >
                 {primaryTag}
-              </span>
+              </button>
               <div class="flex items-center gap-4 text-sm text-muted-foreground">
                 <span class="flex items-center gap-1">
                   <Calendar size={14} />
@@ -53,16 +92,127 @@ const nuggets = allNuggets.sort((a, b) => {
               </div>
             </div>
             
-            <h3 class="mb-2 text-foreground group-hover:text-primary transition-colors">
-              {nugget.data.title}
-            </h3>
-            
-            <p class="text-muted-foreground">
-              {nugget.data.summary}
-            </p>
-          </a>
+            <a href={`/nuggets/${nugget.slug}`} class="block group-hover:text-primary transition-colors">
+              <h3 class="mb-2 text-foreground group-hover:text-primary transition-colors">
+                {nugget.data.title}
+              </h3>
+              
+              <p class="text-muted-foreground">
+                {nugget.data.summary}
+              </p>
+            </a>
+          </div>
         );
       })}
     </div>
+
+    <!-- No Results Message -->
+    <div id="no-results" class="hidden text-center py-12">
+      <p class="text-muted-foreground text-lg mb-2">No nuggets found</p>
+      <p class="text-muted-foreground text-sm">Try adjusting your search terms</p>
+    </div>
   </div>
 </section>
+
+<script define:vars={{ searchData }}>
+  // Wait for DOM and dynamically import Fuse.js
+  document.addEventListener('DOMContentLoaded', () => {
+    import('https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs').then(({ default: Fuse }) => {
+      // Initialize Fuse.js
+      const fuse = new Fuse(searchData, {
+        keys: [
+          { name: 'title', weight: 2 },
+          { name: 'summary', weight: 1.5 },
+          { name: 'tags', weight: 1 },
+        ],
+        threshold: 0.3,
+        ignoreLocation: true,
+      });
+
+      const searchInput = document.getElementById('nugget-search');
+      const noResults = document.getElementById('no-results');
+      const resultsCount = document.getElementById('search-results-count');
+      const allCards = document.querySelectorAll('.nugget-card');
+      const tagButtons = document.querySelectorAll('.tag-filter');
+
+      function updateResults(query) {
+        if (!query.trim()) {
+          // Show all nuggets
+          allCards.forEach(card => {
+            card.style.display = 'block';
+          });
+          if (noResults) noResults.classList.add('hidden');
+          if (resultsCount) resultsCount.textContent = `Showing ${allCards.length} nugget${allCards.length !== 1 ? 's' : ''}`;
+          return;
+        }
+
+        // Search with Fuse.js
+        const results = fuse.search(query);
+        const matchingSlugs = new Set(results.map(r => r.item.slug));
+
+        let visibleCount = 0;
+        allCards.forEach(card => {
+          const slug = card.getAttribute('data-slug');
+          if (matchingSlugs.has(slug)) {
+            card.style.display = 'block';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        // Show/hide no results message
+        if (visibleCount === 0) {
+          if (noResults) noResults.classList.remove('hidden');
+          if (resultsCount) resultsCount.textContent = 'No results';
+        } else {
+          if (noResults) noResults.classList.add('hidden');
+          if (resultsCount) resultsCount.textContent = `Showing ${visibleCount} nugget${visibleCount !== 1 ? 's' : ''}`;
+        }
+      }
+
+      // Debounce search input
+      let debounceTimer;
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            updateResults(e.target.value);
+          }, 150);
+        });
+
+        // Clear search with Escape key
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            searchInput.value = '';
+            updateResults('');
+          }
+        });
+      }
+
+      // Handle tag clicks
+      tagButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const tag = button.getAttribute('data-tag');
+          if (searchInput) {
+            searchInput.value = tag;
+            updateResults(tag);
+            searchInput.focus();
+          }
+        });
+      });
+
+      // Check for tag parameter in URL on page load
+      const urlParams = new URLSearchParams(window.location.search);
+      const tagParam = urlParams.get('tag');
+      if (tagParam && searchInput) {
+        searchInput.value = tagParam;
+        updateResults(tagParam);
+      }
+    }).catch(err => {
+      console.error('Failed to load Fuse.js:', err);
+    });
+  });
+</script>
