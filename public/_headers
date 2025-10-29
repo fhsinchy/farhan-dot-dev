@@ -1,0 +1,9 @@
+/og/*.png
+  Content-Type: image/png
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+/og-default.png
+  Content-Type: image/png
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
