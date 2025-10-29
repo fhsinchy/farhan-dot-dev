@@ -59,19 +59,23 @@ const searchData = nuggets.map(nugget => ({
       {nuggets.map((nugget) => {
         const primaryTag = nugget.data.tags[0];
         return (
-          <a 
-            href={`/nuggets/${nugget.slug}`}
-            class="nugget-card block p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
+          <div 
+            class="nugget-card p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
             data-slug={nugget.slug}
           >
             <div class="flex flex-wrap items-center gap-3 mb-3">
-              <span class={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium ${
-                primaryTag === 'Backend' 
-                  ? 'bg-primary border-transparent text-primary-foreground' 
-                  : 'bg-accent border-transparent text-primary-foreground'
-              }`}>
+              <button 
+                class={`tag-filter inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium transition-all hover:ring-2 hover:ring-primary cursor-pointer ${
+                  primaryTag === 'Backend' 
+                    ? 'bg-primary border-transparent text-primary-foreground' 
+                    : 'bg-accent border-transparent text-primary-foreground'
+                }`}
+                data-tag={primaryTag}
+                aria-label={`Filter by ${primaryTag}`}
+                type="button"
+              >
                 {primaryTag}
-              </span>
+              </button>
               <div class="flex items-center gap-4 text-sm text-muted-foreground">
                 <span class="flex items-center gap-1">
                   <Calendar size={14} />
@@ -88,14 +92,16 @@ const searchData = nuggets.map(nugget => ({
               </div>
             </div>
             
-            <h3 class="mb-2 text-foreground group-hover:text-primary transition-colors">
-              {nugget.data.title}
-            </h3>
-            
-            <p class="text-muted-foreground">
-              {nugget.data.summary}
-            </p>
-          </a>
+            <a href={`/nuggets/${nugget.slug}`} class="block group-hover:text-primary transition-colors">
+              <h3 class="mb-2 text-foreground group-hover:text-primary transition-colors">
+                {nugget.data.title}
+              </h3>
+              
+              <p class="text-muted-foreground">
+                {nugget.data.summary}
+              </p>
+            </a>
+          </div>
         );
       })}
     </div>
@@ -127,6 +133,7 @@ const searchData = nuggets.map(nugget => ({
       const noResults = document.getElementById('no-results');
       const resultsCount = document.getElementById('search-results-count');
       const allCards = document.querySelectorAll('.nugget-card');
+      const tagButtons = document.querySelectorAll('.tag-filter');
 
       function updateResults(query) {
         if (!query.trim()) {
@@ -182,6 +189,20 @@ const searchData = nuggets.map(nugget => ({
           }
         });
       }
+
+      // Handle tag clicks
+      tagButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const tag = button.getAttribute('data-tag');
+          if (searchInput) {
+            searchInput.value = tag;
+            updateResults(tag);
+            searchInput.focus();
+          }
+        });
+      });
     }).catch(err => {
       console.error('Failed to load Fuse.js:', err);
     });
