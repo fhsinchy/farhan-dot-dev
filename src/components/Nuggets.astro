@@ -109,74 +109,81 @@ const searchData = nuggets.map(nugget => ({
 </section>
 
 <script define:vars={{ searchData }}>
-  import('fuse.js').then(({ default: Fuse }) => {
-    // Initialize Fuse.js
-    const fuse = new Fuse(searchData, {
-      keys: [
-        { name: 'title', weight: 2 },
-        { name: 'summary', weight: 1.5 },
-        { name: 'tags', weight: 1 },
-      ],
-      threshold: 0.3,
-      ignoreLocation: true,
-    });
-
-    const searchInput = document.getElementById('nugget-search');
-    const noResults = document.getElementById('no-results');
-    const resultsCount = document.getElementById('search-results-count');
-    const allCards = document.querySelectorAll('.nugget-card');
-
-    function updateResults(query) {
-      if (!query.trim()) {
-        // Show all nuggets
-        allCards.forEach(card => {
-          card.style.display = 'block';
-        });
-        noResults?.classList.add('hidden');
-        resultsCount.textContent = `Showing ${allCards.length} nugget${allCards.length !== 1 ? 's' : ''}`;
-        return;
-      }
-
-      // Search with Fuse.js
-      const results = fuse.search(query);
-      const matchingSlugs = new Set(results.map(r => r.item.slug));
-
-      let visibleCount = 0;
-      allCards.forEach(card => {
-        const slug = card.getAttribute('data-slug');
-        if (matchingSlugs.has(slug)) {
-          card.style.display = 'block';
-          visibleCount++;
-        } else {
-          card.style.display = 'none';
-        }
+  // Wait for DOM and dynamically import Fuse.js
+  document.addEventListener('DOMContentLoaded', () => {
+    import('https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs').then(({ default: Fuse }) => {
+      // Initialize Fuse.js
+      const fuse = new Fuse(searchData, {
+        keys: [
+          { name: 'title', weight: 2 },
+          { name: 'summary', weight: 1.5 },
+          { name: 'tags', weight: 1 },
+        ],
+        threshold: 0.3,
+        ignoreLocation: true,
       });
 
-      // Show/hide no results message
-      if (visibleCount === 0) {
-        noResults?.classList.remove('hidden');
-        resultsCount.textContent = 'No results';
-      } else {
-        noResults?.classList.add('hidden');
-        resultsCount.textContent = `Showing ${visibleCount} nugget${visibleCount !== 1 ? 's' : ''}`;
-      }
-    }
+      const searchInput = document.getElementById('nugget-search');
+      const noResults = document.getElementById('no-results');
+      const resultsCount = document.getElementById('search-results-count');
+      const allCards = document.querySelectorAll('.nugget-card');
 
-    // Debounce search input
-    let debounceTimer;
-    searchInput?.addEventListener('input', (e) => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        updateResults(e.target.value);
-      }, 150);
-    });
+      function updateResults(query) {
+        if (!query.trim()) {
+          // Show all nuggets
+          allCards.forEach(card => {
+            card.style.display = 'block';
+          });
+          if (noResults) noResults.classList.add('hidden');
+          if (resultsCount) resultsCount.textContent = `Showing ${allCards.length} nugget${allCards.length !== 1 ? 's' : ''}`;
+          return;
+        }
 
-    // Clear search with Escape key
-    searchInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        searchInput.value = '';
-        updateResults('');
+        // Search with Fuse.js
+        const results = fuse.search(query);
+        const matchingSlugs = new Set(results.map(r => r.item.slug));
+
+        let visibleCount = 0;
+        allCards.forEach(card => {
+          const slug = card.getAttribute('data-slug');
+          if (matchingSlugs.has(slug)) {
+            card.style.display = 'block';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        // Show/hide no results message
+        if (visibleCount === 0) {
+          if (noResults) noResults.classList.remove('hidden');
+          if (resultsCount) resultsCount.textContent = 'No results';
+        } else {
+          if (noResults) noResults.classList.add('hidden');
+          if (resultsCount) resultsCount.textContent = `Showing ${visibleCount} nugget${visibleCount !== 1 ? 's' : ''}`;
+        }
       }
+
+      // Debounce search input
+      let debounceTimer;
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            updateResults(e.target.value);
+          }, 150);
+        });
+
+        // Clear search with Escape key
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            searchInput.value = '';
+            updateResults('');
+          }
+        });
+      }
+    }).catch(err => {
+      console.error('Failed to load Fuse.js:', err);
     });
   });
 </script>
