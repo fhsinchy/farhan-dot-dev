@@ -25,8 +25,8 @@ type Props = {
 const { nugget } = Astro.props;
 const { Content } = await nugget.render();
 
-// Generate OG image path based on slug (can be customized later)
-const ogImage = `/og-images/${nugget.slug}.jpg`;
+// Generate OG image path
+const ogImage = `/og/nuggets/${nugget.slug}.png`;
 
 // Get SEO keywords based on tags
 const articleKeywords = getKeywordsForTags(nugget.data.tags);
