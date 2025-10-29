@@ -1,12 +1,65 @@
 ---
 import '../styles/globals.css';
+import { baseKeywords } from '../utils/seo-keywords';
 
 interface Props {
 	title: string;
 	description?: string;
+	ogImage?: string;
+	ogType?: string;
+	keywords?: string[];
+	author?: string;
+	article?: {
+		publishedTime?: string;
+		modifiedTime?: string;
+		author?: string;
+		tags?: string[];
+	};
 }
 
-const { title, description = "Backend + AI Engineer. Technical writer for freeCodeCamp, MongoDB, and Honeybadger." } = Astro.props;
+const { 
+	title, 
+	description = "Backend + AI Engineer. Technical writer for freeCodeCamp, MongoDB, and Honeybadger.",
+	ogImage = "/og-default.jpg",
+	ogType = "website",
+	keywords = [...baseKeywords, "Backend Engineering", "AI Engineering", "Technical Writing"],
+	author = "Farhan Hasin Chowdhury",
+	article
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const fullImageURL = new URL(ogImage, Astro.site).toString();
+
+// JSON-LD structured data for Google
+const jsonLd = {
+	"@context": "https://schema.org",
+	"@type": ogType === "article" ? "Article" : "WebPage",
+	"headline": title,
+	"description": description,
+	"image": fullImageURL,
+	"author": {
+		"@type": "Person",
+		"name": author,
+		"url": "https://farhan.dev"
+	},
+	"publisher": {
+		"@type": "Person",
+		"name": "Farhan Hasin Chowdhury",
+		"logo": {
+			"@type": "ImageObject",
+			"url": "https://farhan.dev/favicon.svg"
+		}
+	},
+	...(article?.publishedTime && {
+		"datePublished": article.publishedTime,
+		"dateModified": article.modifiedTime || article.publishedTime
+	}),
+	...(article?.tags && { "keywords": article.tags.join(', ') }),
+	"mainEntityOfPage": {
+		"@type": "WebPage",
+		"@id": canonicalURL.toString()
+	}
+};
 ---
 
 <!doctype html>
@@ -15,8 +68,59 @@ const { title, description = "Backend + AI Engineer. Technical writer for freeCo
 		<meta charset="UTF-8" />
 		<meta name="description" content={description} />
 		<meta name="viewport" content="width=device-width" />
+		<meta name="author" content={author} />
+		<meta name="keywords" content={keywords.join(', ')} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
+		<link rel="canonical" href={canonicalURL} />
+		
+		<!-- Open Graph / Facebook / LinkedIn -->
+		<meta property="og:type" content={ogType} />
+		<meta property="og:url" content={canonicalURL} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={fullImageURL} />
+		<meta property="og:image:alt" content={title} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:site_name" content="Farhan Hasin Chowdhury" />
+		<meta property="og:locale" content="en_US" />
+		
+		{article && (
+			<>
+				{article.publishedTime && (
+					<meta property="article:published_time" content={article.publishedTime} />
+				)}
+				{article.modifiedTime && (
+					<meta property="article:modified_time" content={article.modifiedTime} />
+				)}
+				{article.author && (
+					<meta property="article:author" content={article.author} />
+				)}
+				{article.tags && article.tags.map((tag) => (
+					<meta property="article:tag" content={tag} />
+				))}
+				<meta property="article:section" content="Technology" />
+			</>
+		)}
+		
+		<!-- Twitter -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:url" content={canonicalURL} />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={fullImageURL} />
+		<meta name="twitter:image:alt" content={title} />
+		<meta name="twitter:creator" content="@fhsinchy" />
+		<meta name="twitter:site" content="@fhsinchy" />
+		
+		<!-- Additional SEO -->
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+		<meta name="googlebot" content="index, follow" />
+		<meta name="theme-color" content="#0a0a0a" />
+		
+		<!-- JSON-LD Structured Data -->
+		<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 		
 		<!-- Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
