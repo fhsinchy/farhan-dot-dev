@@ -24,6 +24,7 @@ permissions:
 jobs:
   generate-nugget:
     runs-on: ubuntu-latest
+    environment: master  # Reference the GitHub Environment
     
     steps:
       - name: Checkout repository
