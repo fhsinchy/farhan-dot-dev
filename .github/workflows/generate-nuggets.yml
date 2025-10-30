@@ -1,13 +1,14 @@
 name: Generate Nuggets
 
 on:
-  # Trigger when YAML files are added/modified in /ideas/
+  # Trigger when JSON files are added/modified in /ideas/
   push:
     paths:
-      - 'ideas/**.yml'
-      - 'ideas/**.yaml'
+      - 'ideas/**.json'
+      - '!ideas/TEMPLATE.json'  # Ignore template file
     branches:
       - main
+      - master
       - feat/content-collections
   
   # Allow manual trigger
@@ -39,8 +40,8 @@ jobs:
             # Manual trigger with specific file
             echo "files=${{ inputs.idea_file }}" >> $GITHUB_OUTPUT
           else
-            # Auto trigger - get changed files
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '^ideas/.*\.ya*ml$' || true)
+            # Auto trigger - get changed JSON files (excluding template)
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '^ideas/.*\.json$' | grep -v 'TEMPLATE.json' || true)
             if [ -z "$CHANGED_FILES" ]; then
               echo "No idea files changed"
               echo "files=" >> $GITHUB_OUTPUT
@@ -51,6 +52,14 @@ jobs:
               echo "EOF" >> $GITHUB_OUTPUT
             fi
           fi
+      
+      - name: Initialize summary
+        if: steps.detect-changes.outputs.files != ''
+        run: |
+          echo "# 🎉 Nugget Generation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
       
       - name: Process idea files
         if: steps.detect-changes.outputs.files != ''
@@ -69,31 +78,25 @@ jobs:
           
           echo "Using Worker URL: $WORKER_URL"
           
-          # Read each changed idea file and send to Worker
+          # Process each changed idea file
           echo "${{ steps.detect-changes.outputs.files }}" | while read -r file; do
             if [ -z "$file" ]; then
               continue
             fi
             
-            echo "Processing: $file"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📄 Processing: $file"
             
-            # Read YAML file and convert to JSON
-            IDEA_JSON=$(cat "$file" | python3 -c '
-          import sys, yaml, json
-          try:
-              data = yaml.safe_load(sys.stdin)
-              print(json.dumps({"idea": data}))
-          except Exception as e:
-              print(f"Error parsing YAML: {e}", file=sys.stderr)
-              sys.exit(1)
-          ')
-            
-            if [ $? -ne 0 ]; then
-              echo "Failed to parse $file"
+            # Read JSON file and wrap in {"idea": ...}
+            if ! IDEA_JSON=$(jq -c '{idea: .}' "$file" 2>&1); then
+              echo "❌ Failed to parse JSON: $IDEA_JSON"
               continue
             fi
             
+            echo "✅ Parsed JSON successfully"
+            
             # Send to Worker API
+            echo "🚀 Sending to Worker..."
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$WORKER_URL/ai/generate-nugget" \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $WORKER_API_KEY" \
@@ -102,34 +105,31 @@ jobs:
             HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
             BODY=$(echo "$RESPONSE" | sed '$d')
             
-            echo "Response code: $HTTP_CODE"
-            echo "Response body: $BODY"
+            echo "📊 Response code: $HTTP_CODE"
             
             if [ "$HTTP_CODE" -eq 201 ]; then
-              echo "✅ Successfully generated nugget from $file"
-              PR_URL=$(echo "$BODY" | python3 -c 'import sys, json; data=json.load(sys.stdin); print(data.get("data", {}).get("pr", {}).get("prUrl", "N/A"))')
-              echo "PR URL: $PR_URL"
+              echo "✅ Successfully generated nugget!"
+              PR_URL=$(echo "$BODY" | jq -r '.data.pr.prUrl // "N/A"')
+              PR_NUMBER=$(echo "$BODY" | jq -r '.data.pr.prNumber // "N/A"')
+              SLUG=$(echo "$BODY" | jq -r '.data.nugget.slug // "N/A"')
+              
+              echo "🔗 PR #$PR_NUMBER: $PR_URL"
+              echo "📝 Slug: $SLUG"
+              
+              # Add to job summary
+              echo "- ✅ **$file** → [PR #$PR_NUMBER]($PR_URL) (slug: \`$SLUG\`)" >> $GITHUB_STEP_SUMMARY
             else
-              echo "❌ Failed to generate nugget from $file"
+              echo "❌ Failed to generate nugget"
+              echo "Response: $BODY" | jq '.' || echo "$BODY"
+              echo "- ❌ **$file** - Failed (HTTP $HTTP_CODE)" >> $GITHUB_STEP_SUMMARY
               exit 1
             fi
           done
-      
-      - name: Summary
-        if: steps.detect-changes.outputs.files != ''
-        run: |
-          echo "### 🎉 Nugget Generation Complete!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Processed files:" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.detect-changes.outputs.files }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check your repository for new PRs!" >> $GITHUB_STEP_SUMMARY
       
       - name: No changes
         if: steps.detect-changes.outputs.files == ''
         run: |
           echo "No idea files to process"
-          echo "### ℹ️ No Changes Detected" >> $GITHUB_STEP_SUMMARY
-          echo "No YAML files in /ideas/ were modified in this commit." >> $GITHUB_STEP_SUMMARY
+          echo "# ℹ️ No Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No JSON files in \`/ideas/\` were modified in this commit." >> $GITHUB_STEP_SUMMARY
