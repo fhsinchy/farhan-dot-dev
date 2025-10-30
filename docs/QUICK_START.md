@@ -20,20 +20,6 @@ Create a JSON file in `/ideas/`:
 }
 ```
 
-**Or use YAML format** (if you prefer):
-
-```yaml
-# ideas/my-awesome-topic.yml
-title: "Your Nugget Title Here"
-topic: "Brief description of what this nugget covers"
-tags:
-  - tag1
-  - tag2
-  - tag3
-context: "Optional context"
-codeExample: true
-```
-
 ### 2. Commit and Push
 
 ```bash
@@ -91,10 +77,9 @@ See [GitHub Action Setup Guide](./github-action-setup.md) for detailed instructi
 ## Example Ideas
 
 Check `/ideas/` directory for examples:
-- `example-idempotency-keys.json` (JSON format - recommended)
-- `example-vector-search-rag.json` (JSON format - recommended)
-- `example-idempotency-keys.yml` (YAML format - also supported)
-- `example-vector-search-rag.yml` (YAML format - also supported)
+- `TEMPLATE.json` - Copy this to start!
+- `example-idempotency-keys.json`
+- `example-vector-search-rag.json`
 
 ---
 
@@ -122,7 +107,8 @@ curl -X POST https://your-worker.workers.dev/ai/generate-nugget \
 ### No PR created after push
 - Check **Actions** tab for workflow status
 - Look for error messages in workflow logs
-- Verify file is in `/ideas/` with `.json`, `.yml`, or `.yaml` extension
+- Verify file is in `/ideas/` with `.json` extension
+- Make sure it's not named `TEMPLATE.json`
 
 ### "401 Unauthorized"
 - Check GitHub secrets are set correctly

@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       idea_file:
-        description: 'Specific idea file to process (e.g., ideas/my-idea.yml)'
+        description: 'Specific idea file to process (e.g., ideas/my-idea.json)'
         required: false
         type: string
 
@@ -69,9 +69,9 @@ jobs:
           # Validate environment variables
           if [ -z "$WORKER_URL" ] || [ -z "$WORKER_API_KEY" ]; then
             echo "❌ Error: WORKER_URL or WORKER_API_KEY not set"
-            echo "Please configure these in your GitHub Environment 'master'"
-            echo "WORKER_URL: ${WORKER_URL:-NOT SET}"
-            echo "WORKER_API_KEY: ${WORKER_API_KEY:+SET (hidden)}"
+            echo "Please configure these in Repository Settings → Secrets and variables → Actions"
+            echo "WORKER_URL should be a variable or secret"
+            echo "WORKER_API_KEY should be a secret"
             exit 1
           fi
           
@@ -85,9 +85,12 @@ jobs:
           # Remove trailing slash if present
           WORKER_URL="${WORKER_URL%/}"
           
-          echo "✅ Using Worker URL: $WORKER_URL"
-          echo "✅ API Key is set"
+          echo "✅ Configuration validated"
           echo ""
+          
+          # Track success/failure
+          SUCCESS_COUNT=0
+          FAIL_COUNT=0
           
           # Process each changed idea file
           echo "${{ steps.detect-changes.outputs.files }}" | while read -r file; do
@@ -98,9 +101,17 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "📄 Processing: $file"
             
+            # Validate file exists
+            if [ ! -f "$file" ]; then
+              echo "⚠️  File not found: $file"
+              continue
+            fi
+            
             # Read JSON file and wrap in {"idea": ...}
             if ! IDEA_JSON=$(jq -c '{idea: .}' "$file" 2>&1); then
               echo "❌ Failed to parse JSON: $IDEA_JSON"
+              FAIL_COUNT=$((FAIL_COUNT + 1))
+              echo "- ❌ **$file** - JSON parse error" >> $GITHUB_STEP_SUMMARY
               continue
             fi
             
@@ -120,6 +131,8 @@ jobs:
             
             if [ "$HTTP_CODE" -eq 201 ]; then
               echo "✅ Successfully generated nugget!"
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+              
               PR_URL=$(echo "$BODY" | jq -r '.data.pr.prUrl // "N/A"')
               PR_NUMBER=$(echo "$BODY" | jq -r '.data.pr.prNumber // "N/A"')
               SLUG=$(echo "$BODY" | jq -r '.data.nugget.slug // "N/A"')
@@ -131,6 +144,8 @@ jobs:
               echo "- ✅ **$file** → [PR #$PR_NUMBER]($PR_URL) (slug: \`$SLUG\`)" >> $GITHUB_STEP_SUMMARY
             else
               echo "❌ Failed to generate nugget"
+              FAIL_COUNT=$((FAIL_COUNT + 1))
+              
               echo ""
               echo "Full URL called: $WORKER_URL/ai/generate-nugget"
               echo ""
@@ -144,9 +159,20 @@ jobs:
               fi
               
               echo "- ❌ **$file** - Failed (HTTP $HTTP_CODE)" >> $GITHUB_STEP_SUMMARY
-              exit 1
             fi
           done
+          
+          # Summary footer
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "**Summary:** ✅ $SUCCESS_COUNT successful, ❌ $FAIL_COUNT failed" >> $GITHUB_STEP_SUMMARY
+          
+          # Exit with error if any failed
+          if [ $FAIL_COUNT -gt 0 ]; then
+            echo ""
+            echo "⚠️  $FAIL_COUNT file(s) failed to process"
+            exit 1
+          fi
       
       - name: No changes
         if: steps.detect-changes.outputs.files == ''

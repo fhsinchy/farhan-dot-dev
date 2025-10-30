@@ -43,16 +43,20 @@ The Worker now requires authentication!
 
 Go to your repository settings and add these secrets:
 
-**GitHub Repository → Settings → Secrets and variables → Actions → New repository secret**
+**GitHub Repository → Settings → Secrets and variables → Actions**
 
-Add two secrets:
+Add two items:
 
-#### Secret 1: `WORKER_URL`
+#### Variable: `WORKER_URL`
+- Go to the **Variables** tab
+- Click **New repository variable**
 - **Name:** `WORKER_URL`
 - **Value:** Your Worker URL (e.g., `https://ai-nugget-generator.your-subdomain.workers.dev`)
-- No trailing slash
+- **Important:** No trailing slash, no path (don't include `/ai/generate-nugget`)
 
-#### Secret 2: `WORKER_API_KEY`
+#### Secret: `WORKER_API_KEY`
+- Go to the **Secrets** tab
+- Click **New repository secret**
 - **Name:** `WORKER_API_KEY`
 - **Value:** The API key you generated in step 1
 
@@ -68,20 +72,20 @@ If not, ensure it's committed to your repository.
 
 1. Create a new idea file:
    ```bash
-   # Create ideas/test-github-action.yml
-   cat > ideas/test-github-action.yml << 'EOF'
-   title: "Testing GitHub Actions Integration"
-   topic: "Verifying automated nugget generation workflow"
-   tags:
-     - automation
-     - testing
-   codeExample: false
+   # Create ideas/test-github-action.json
+   cat > ideas/test-github-action.json << 'EOF'
+   {
+     "title": "Testing GitHub Actions Integration",
+     "topic": "Verifying automated nugget generation workflow",
+     "tags": ["automation", "testing"],
+     "codeExample": false
+   }
    EOF
    ```
 
 2. Commit and push:
    ```bash
-   git add ideas/test-github-action.yml
+   git add ideas/test-github-action.json
    git commit -m "test: add idea to trigger GitHub Action"
    git push
    ```
@@ -93,7 +97,7 @@ If not, ensure it's committed to your repository.
 1. Go to **Actions** tab in GitHub
 2. Select **Generate Nuggets** workflow
 3. Click **Run workflow**
-4. (Optional) Specify a file path like `ideas/test-github-action.yml`
+4. (Optional) Specify a file path like `ideas/test-github-action.json`
 5. Click **Run workflow** button
 
 ### 6. Verify Results
@@ -107,7 +111,8 @@ After the workflow runs:
 ## Workflow Features
 
 ### Automatic Detection
-- Triggers on any `.yml` or `.yaml` file added/modified in `/ideas/`
+- Triggers on any `.json` file added/modified in `/ideas/`
+- Ignores `TEMPLATE.json`
 - Processes multiple files if multiple ideas are committed at once
 
 ### Manual Dispatch
@@ -128,17 +133,19 @@ After the workflow runs:
 
 ### Workflow doesn't trigger
 - Check that file is in `/ideas/` directory
-- Ensure file has `.yml` or `.yaml` extension
-- Verify you pushed to the correct branch (`main` or `feat/content-collections`)
+- Ensure file has `.json` extension
+- Verify file is not named `TEMPLATE.json`
+- Verify you pushed to the correct branch (`main` or `master`)
 
 ### "401 Unauthorized" error
 - Verify `WORKER_API_KEY` secret matches the Worker secret
 - Check `WORKER_URL` is correct (no trailing slash)
 - Ensure Worker was redeployed after setting `WORKER_API_KEY`
 
-### "Failed to parse YAML"
-- Check YAML syntax is valid
+### "Failed to parse JSON"
+- Check JSON syntax is valid
 - Ensure required fields are present: `title`, `topic`, `tags`
+- Use a JSON validator or `jq` to test the file
 
 ### Workflow succeeds but no PR created
 - Check Worker logs: `npm run worker:tail`
