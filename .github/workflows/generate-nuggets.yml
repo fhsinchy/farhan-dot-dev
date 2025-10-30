@@ -25,7 +25,6 @@ permissions:
 jobs:
   generate-nugget:
     runs-on: ubuntu-latest
-    environment: master  # Reference the GitHub Environment
     
     steps:
       - name: Checkout repository
@@ -76,7 +75,19 @@ jobs:
             exit 1
           fi
           
-          echo "Using Worker URL: $WORKER_URL"
+          # Validate Worker URL format
+          if [[ ! "$WORKER_URL" =~ ^https?:// ]]; then
+            echo "❌ Error: WORKER_URL must start with http:// or https://"
+            echo "Current value: $WORKER_URL"
+            exit 1
+          fi
+          
+          # Remove trailing slash if present
+          WORKER_URL="${WORKER_URL%/}"
+          
+          echo "✅ Using Worker URL: $WORKER_URL"
+          echo "✅ API Key is set"
+          echo ""
           
           # Process each changed idea file
           echo "${{ steps.detect-changes.outputs.files }}" | while read -r file; do
@@ -120,7 +131,18 @@ jobs:
               echo "- ✅ **$file** → [PR #$PR_NUMBER]($PR_URL) (slug: \`$SLUG\`)" >> $GITHUB_STEP_SUMMARY
             else
               echo "❌ Failed to generate nugget"
-              echo "Response: $BODY" | jq '.' || echo "$BODY"
+              echo ""
+              echo "Full URL called: $WORKER_URL/ai/generate-nugget"
+              echo ""
+              echo "Response body:"
+              if echo "$BODY" | jq '.' 2>/dev/null; then
+                # Valid JSON response
+                echo "$BODY" | jq '.'
+              else
+                # Not JSON, print raw
+                echo "$BODY"
+              fi
+              
               echo "- ❌ **$file** - Failed (HTTP $HTTP_CODE)" >> $GITHUB_STEP_SUMMARY
               exit 1
             fi
