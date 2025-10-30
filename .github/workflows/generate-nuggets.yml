@@ -58,6 +58,17 @@ jobs:
           WORKER_URL: ${{ vars.WORKER_URL || secrets.WORKER_URL }}
           WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
         run: |
+          # Validate environment variables
+          if [ -z "$WORKER_URL" ] || [ -z "$WORKER_API_KEY" ]; then
+            echo "❌ Error: WORKER_URL or WORKER_API_KEY not set"
+            echo "Please configure these in your GitHub Environment 'master'"
+            echo "WORKER_URL: ${WORKER_URL:-NOT SET}"
+            echo "WORKER_API_KEY: ${WORKER_API_KEY:+SET (hidden)}"
+            exit 1
+          fi
+          
+          echo "Using Worker URL: $WORKER_URL"
+          
           # Read each changed idea file and send to Worker
           echo "${{ steps.detect-changes.outputs.files }}" | while read -r file; do
             if [ -z "$file" ]; then
