@@ -1,0 +1,13 @@
+# Redirect www to non-www (if using custom domain)
+https://www.farhan.dev/* https://farhan.dev/:splat 301!
+
+# Trailing slash normalization (optional - Astro handles this)
+# /about /about/ 301
+# /nuggets /nuggets/ 301
+
+# Legacy redirects (add old URLs here if you're migrating from another site)
+# /blog/* /nuggets/:splat 301
+# /old-page /new-page 301
+
+# 404 fallback (Cloudflare Pages handles this automatically)
+# /* /404.html 404
