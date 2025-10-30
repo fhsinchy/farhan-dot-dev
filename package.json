@@ -6,7 +6,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "worker:dev": "wrangler dev --config workers/ai-generator/wrangler.toml",
+    "worker:deploy": "wrangler deploy --config workers/ai-generator/wrangler.toml",
+    "worker:tail": "wrangler tail --config workers/ai-generator/wrangler.toml"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.9",

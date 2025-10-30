@@ -1,0 +1,29 @@
+name = "ai-nugget-generator"
+main = "src/index.ts"
+compatibility_date = "2025-10-30"
+compatibility_flags = ["nodejs_compat"]
+
+# KV namespace for idea seeds and generation logs
+[[kv_namespaces]]
+binding = "NUGGET_STORE"
+id = "da62f46128c34684b5c9109d4d631b17" # Replace with actual KV namespace ID after creation
+
+# Environment variables (use wrangler secret for sensitive values)
+[vars]
+GITHUB_REPO = "fhsinchy/farhan-dot-dev"
+GITHUB_BRANCH_PREFIX = "nuggets"
+RATE_LIMIT_PER_HOUR = "10"
+
+# Secrets to set via CLI:
+# wrangler secret put OPENAI_API_KEY
+# wrangler secret put GITHUB_TOKEN
+# wrangler secret put WORKER_API_KEY
+
+# Worker route (optional - can also use workers.dev subdomain)
+# routes = [
+#   { pattern = "farhan.dev/ai/*", zone_name = "farhan.dev" }
+# ]
+
+# Development settings
+[dev]
+port = 8787

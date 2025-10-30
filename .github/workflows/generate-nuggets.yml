@@ -1,0 +1,123 @@
+name: Generate Nuggets
+
+on:
+  # Trigger when YAML files are added/modified in /ideas/
+  push:
+    paths:
+      - 'ideas/**.yml'
+      - 'ideas/**.yaml'
+    branches:
+      - main
+      - feat/content-collections
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      idea_file:
+        description: 'Specific idea file to process (e.g., ideas/my-idea.yml)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  generate-nugget:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to detect changes
+      
+      - name: Detect changed idea files
+        id: detect-changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.idea_file }}" ]; then
+            # Manual trigger with specific file
+            echo "files=${{ inputs.idea_file }}" >> $GITHUB_OUTPUT
+          else
+            # Auto trigger - get changed files
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '^ideas/.*\.ya*ml$' || true)
+            if [ -z "$CHANGED_FILES" ]; then
+              echo "No idea files changed"
+              echo "files=" >> $GITHUB_OUTPUT
+            else
+              echo "Changed files: $CHANGED_FILES"
+              echo "files<<EOF" >> $GITHUB_OUTPUT
+              echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Process idea files
+        if: steps.detect-changes.outputs.files != ''
+        env:
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
+        run: |
+          # Read each changed idea file and send to Worker
+          echo "${{ steps.detect-changes.outputs.files }}" | while read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+            
+            echo "Processing: $file"
+            
+            # Read YAML file and convert to JSON
+            IDEA_JSON=$(cat "$file" | python3 -c '
+          import sys, yaml, json
+          try:
+              data = yaml.safe_load(sys.stdin)
+              print(json.dumps({"idea": data}))
+          except Exception as e:
+              print(f"Error parsing YAML: {e}", file=sys.stderr)
+              sys.exit(1)
+          ')
+            
+            if [ $? -ne 0 ]; then
+              echo "Failed to parse $file"
+              continue
+            fi
+            
+            # Send to Worker API
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$WORKER_URL/ai/generate-nugget" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $WORKER_API_KEY" \
+              -d "$IDEA_JSON")
+            
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+            
+            echo "Response code: $HTTP_CODE"
+            echo "Response body: $BODY"
+            
+            if [ "$HTTP_CODE" -eq 201 ]; then
+              echo "✅ Successfully generated nugget from $file"
+              PR_URL=$(echo "$BODY" | python3 -c 'import sys, json; data=json.load(sys.stdin); print(data.get("data", {}).get("pr", {}).get("prUrl", "N/A"))')
+              echo "PR URL: $PR_URL"
+            else
+              echo "❌ Failed to generate nugget from $file"
+              exit 1
+            fi
+          done
+      
+      - name: Summary
+        if: steps.detect-changes.outputs.files != ''
+        run: |
+          echo "### 🎉 Nugget Generation Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Processed files:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.detect-changes.outputs.files }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check your repository for new PRs!" >> $GITHUB_STEP_SUMMARY
+      
+      - name: No changes
+        if: steps.detect-changes.outputs.files == ''
+        run: |
+          echo "No idea files to process"
+          echo "### ℹ️ No Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "No YAML files in /ideas/ were modified in this commit." >> $GITHUB_STEP_SUMMARY
