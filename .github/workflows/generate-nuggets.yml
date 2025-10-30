@@ -55,7 +55,7 @@ jobs:
       - name: Process idea files
         if: steps.detect-changes.outputs.files != ''
         env:
-          WORKER_URL: ${{ secrets.WORKER_URL }}
+          WORKER_URL: ${{ vars.WORKER_URL || secrets.WORKER_URL }}
           WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
         run: |
           # Read each changed idea file and send to Worker
