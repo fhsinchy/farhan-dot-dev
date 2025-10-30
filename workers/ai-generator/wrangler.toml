@@ -17,6 +17,7 @@ RATE_LIMIT_PER_HOUR = "10"
 # Secrets to set via CLI:
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put GITHUB_TOKEN
+# wrangler secret put WORKER_API_KEY
 
 # Worker route (optional - can also use workers.dev subdomain)
 # routes = [

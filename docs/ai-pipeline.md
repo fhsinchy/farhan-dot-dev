@@ -42,6 +42,9 @@ wrangler secret put OPENAI_API_KEY --config workers/ai-generator/wrangler.toml
 
 # Set GitHub Personal Access Token (with repo scope)
 wrangler secret put GITHUB_TOKEN --config workers/ai-generator/wrangler.toml
+
+# Set Worker API key for authentication
+wrangler secret put WORKER_API_KEY --config workers/ai-generator/wrangler.toml
 ```
 
 **GitHub Token Scopes Required:**
@@ -100,17 +103,34 @@ codeExample: true
 
 ### Step 2: Trigger Generation
 
-**Option A: API Call**
+**Option A: GitHub Action (Recommended - Automated)**
+
+Simply commit your YAML file to the repository:
+
+```bash
+git add ideas/redis-distributed-locks.yml
+git commit -m "feat: add idea for Redis distributed locks"
+git push
+```
+
+The GitHub Action automatically:
+- Detects the new/modified YAML file
+- Calls the Worker API
+- Generates the nugget
+- Creates a PR
+
+See [GitHub Action Setup Guide](./github-action-setup.md) for configuration.
+
+**Option B: Manual API Call**
+
 ```bash
 curl -X POST https://your-worker.workers.dev/ai/generate-nugget \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_WORKER_API_KEY" \
   -d @ideas/redis-distributed-locks.yml
 ```
 
-**Option B: GitHub Action** (coming soon)
-- Commit YAML to `/ideas/`
-- Action automatically triggers Worker
-- PR created within seconds
+**Note:** The endpoint requires authentication. Set up the API key in Worker secrets.
 
 ### Step 3: Review PR
 

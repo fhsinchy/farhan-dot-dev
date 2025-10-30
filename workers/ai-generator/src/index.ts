@@ -42,6 +42,18 @@ async function handleGenerateNugget(
 	corsHeaders: Record<string, string>
 ): Promise<Response> {
 	try {
+		// Authentication check
+		const authHeader = request.headers.get('Authorization');
+		const expectedAuth = `Bearer ${env.WORKER_API_KEY}`;
+		
+		if (!authHeader || authHeader !== expectedAuth) {
+			return jsonResponse(
+				{ success: false, error: 'Unauthorized' },
+				401,
+				corsHeaders
+			);
+		}
+
 		// Parse request body
 		const body = await request.json() as NuggetRequest;
 

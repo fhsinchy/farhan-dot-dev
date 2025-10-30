@@ -3,6 +3,7 @@
 export interface Env {
 	OPENAI_API_KEY: string;
 	GITHUB_TOKEN: string;
+	WORKER_API_KEY: string;
 	NUGGET_STORE: KVNamespace<string>;
 	GITHUB_REPO: string;
 	GITHUB_BRANCH_PREFIX: string;
