@@ -1,0 +1,14 @@
+# Worker build output
+dist/
+.wrangler/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.dev.vars
+
+# OS
+.DS_Store
+Thumbs.db
