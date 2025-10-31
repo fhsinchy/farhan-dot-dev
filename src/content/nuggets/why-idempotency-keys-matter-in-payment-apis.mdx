@@ -1,0 +1,46 @@
+---
+title: "Why Idempotency Keys Matter in Payment APIs"
+summary: "Payment APIs are prone to network failures and retries, which can lead to duplicate charges if not handled properly"
+tags: ["api-design", "reliability", "microservices"]
+date: 2025-10-31
+readTime: "2 min"
+published: false
+generatedFrom: "why-idempotency-keys-matter-in-payment-apis"
+reviewed: false
+---
+
+## Why Idempotency Keys Matter in Payment APIs
+
+Payment APIs are prone to network failures and retries, which can lead to duplicate charges if not handled properly.
+
+- **Idempotency Definition**: An idempotency key is a unique identifier sent with a request to ensure that the same operation is not performed multiple times. For example, if a payment request is retried due to a timeout, the server can recognize the key and return the original response without processing the payment again.
+  
+- **Implementation**: Store the idempotency key in a fast-access store (like Redis) along with the transaction status. If a request with an existing key is received, return the stored response instead of processing it again. Ensure the key has an appropriate expiration time to avoid stale data.
+
+- **Database Transactions**: When implementing idempotency, wrap payment processing logic in a transaction. This protects against partial payments, ensuring either the entire operation succeeds or fails.
+
+```python
+def process_payment(payment_request):
+    key = payment_request.idempotency_key
+    existing_response = redis.get(key)
+    
+    if existing_response:
+        return existing_response  # Return cached response
+
+    transaction = db.begin_transaction()
+    try:
+        # Process payment
+        charge = payment_processor.charge(payment_request)
+        
+        # Store result for future requests
+        redis.set(key, charge, ex=3600)  # Expires in 1 hour
+        transaction.commit()
+        return charge
+    except Exception as e:
+        transaction.rollback()
+        raise e
+```
+
+### Apply It
+- Implement idempotency keys in your payment API, ensuring all requests are accompanied by a unique identifier.
+- Regularly review and test your implementation against scenarios like network failures and retries to validate that duplicate charges are eliminated.
