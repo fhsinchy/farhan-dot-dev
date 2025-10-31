@@ -15,7 +15,7 @@ id = "da62f46128c34684b5c9109d4d631b17" # Replace with actual KV namespace ID af
 # KV namespace for idea queue (Stage 1: scheduler)
 [[kv_namespaces]]
 binding = "IDEA_QUEUE"
-id = "" # TODO: Create via `wrangler kv:namespace create "IDEA_QUEUE"` and update this ID
+id = "d646eaf4159d4f41a6530475a3def064" # TODO: Create via `wrangler kv:namespace create "IDEA_QUEUE"` and update this ID
 
 # Environment variables (use wrangler secret for sensitive values)
 [vars]

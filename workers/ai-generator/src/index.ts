@@ -79,6 +79,10 @@ export default {
 			return handleGenerateNugget(request, env, corsHeaders);
 		}
 
+		if (url.pathname === '/ai/load-idea' && request.method === 'POST') {
+			return handleLoadIdea(request, env, corsHeaders);
+		}
+
 		if (url.pathname === '/ai/health' && request.method === 'GET') {
 			return jsonResponse({ success: true, message: 'AI Worker is healthy' }, 200, corsHeaders);
 		}
