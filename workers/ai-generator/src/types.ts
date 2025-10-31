@@ -56,6 +56,8 @@ export interface APIResponse {
 	data?: {
 		nugget?: GeneratedNugget;
 		pr?: GitHubPRResponse;
+		slug?: string;
+		idea?: { title: string; status: string };
 	};
 	error?: string;
 }

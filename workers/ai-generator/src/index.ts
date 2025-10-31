@@ -1,8 +1,8 @@
-import type { Env, NuggetRequest, APIResponse, IdeaSeed } from './types';
-import { validateIdeaSeed, checkRateLimit, generateSlug } from './utils';
+import type { Env, APIResponse, IdeaSeed } from './types';
+import { validateIdeaSeed, generateSlug } from './utils';
+import { getNextPendingIdea, markIdeaStatus, addIdeaToQueue } from './queue';
 import { generateNugget } from './openai';
 import { createPullRequest } from './github';
-import { getNextPendingIdea, markIdeaStatus, addIdeaToQueue } from './queue';
 
 // Cron handler (Stage 1: scheduled generation)
 export const scheduled = async (event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> => {
@@ -75,10 +75,6 @@ export default {
 		}
 
 		// Route handling
-		if (url.pathname === '/ai/generate-nugget' && request.method === 'POST') {
-			return handleGenerateNugget(request, env, corsHeaders);
-		}
-
 		if (url.pathname === '/ai/load-idea' && request.method === 'POST') {
 			return handleLoadIdea(request, env, corsHeaders);
 		}
@@ -94,104 +90,6 @@ export default {
 		);
 	},
 };
-
-async function handleGenerateNugget(
-	request: Request,
-	env: Env,
-	corsHeaders: Record<string, string>
-): Promise<Response> {
-	try {
-		// Authentication check
-		const authHeader = request.headers.get('Authorization');
-		const expectedAuth = `Bearer ${env.WORKER_API_KEY}`;
-		
-		if (!authHeader || authHeader !== expectedAuth) {
-			return jsonResponse(
-				{ success: false, error: 'Unauthorized' },
-				401,
-				corsHeaders
-			);
-		}
-
-		// Parse request body
-		const body = await request.json() as NuggetRequest;
-
-		// Validate idea seed
-		const validationError = validateIdeaSeed(body.idea);
-		if (validationError) {
-			return jsonResponse(
-				{ success: false, error: `Invalid idea seed: ${validationError}` },
-				400,
-				corsHeaders
-			);
-		}
-
-		// Rate limiting (by IP or API key)
-		const identifier = request.headers.get('CF-Connecting-IP') || 'anonymous';
-		const rateLimit = await checkRateLimit(
-			env.NUGGET_STORE,
-			identifier,
-			parseInt(env.RATE_LIMIT_PER_HOUR, 10)
-		);
-
-		if (!rateLimit.allowed) {
-			return jsonResponse(
-				{
-					success: false,
-					error: 'Rate limit exceeded. Try again later.',
-				},
-				429,
-				corsHeaders
-			);
-		}
-
-		// Generate nugget using OpenAI
-		const nugget = await generateNugget(body.idea, env);
-
-		// Create GitHub PR
-		const pr = await createPullRequest(nugget, env);
-
-		// Log to KV for tracking
-		await env.NUGGET_STORE.put(
-			`generation:${nugget.slug}`,
-			JSON.stringify({
-				slug: nugget.slug,
-				title: nugget.frontmatter.title,
-				createdAt: new Date().toISOString(),
-				prUrl: pr.prUrl,
-			}),
-			{ expirationTtl: 86400 * 30 } // Keep for 30 days
-		);
-
-		return jsonResponse(
-			{
-				success: true,
-				message: 'Nugget generated and PR created successfully',
-				data: {
-					nugget: {
-						slug: nugget.slug,
-						frontmatter: nugget.frontmatter,
-						content: nugget.content.substring(0, 200) + '...', // Preview only
-						fullMdx: '', // Don't send full content in response
-					},
-					pr,
-				},
-			},
-			201,
-			corsHeaders
-		);
-	} catch (error) {
-		console.error('Error generating nugget:', error);
-		return jsonResponse(
-			{
-				success: false,
-				error: error instanceof Error ? error.message : 'Internal server error',
-			},
-			500,
-			corsHeaders
-		);
-	}
-}
 
 async function handleLoadIdea(
 	request: Request,
@@ -212,8 +110,8 @@ async function handleLoadIdea(
 		}
 
 		// Parse request body (expects { idea: IdeaSeed } or just IdeaSeed)
-		const body = await request.json();
-		const idea: IdeaSeed = body.idea || body;
+		const body = await request.json() as { idea?: IdeaSeed } | IdeaSeed;
+		const idea: IdeaSeed = (body as { idea?: IdeaSeed }).idea || (body as IdeaSeed);
 
 		// Validate idea seed
 		const validationError = validateIdeaSeed(idea);
