@@ -2,7 +2,8 @@ import type { Env, GeneratedNugget, GitHubPRResponse } from './types';
 
 export async function createPullRequest(
 	nugget: GeneratedNugget,
-	env: Env
+	env: Env,
+	scheduledFor?: string
 ): Promise<GitHubPRResponse> {
 	const branchName = `${env.GITHUB_BRANCH_PREFIX}/${nugget.slug}-${Date.now()}`;
 	const filePath = `src/content/nuggets/${nugget.slug}.mdx`;
@@ -77,7 +78,7 @@ export async function createPullRequest(
 		title: `✨ New Nugget: ${nugget.frontmatter.title}`,
 		head: branchName,
 		base: baseBranch,
-		body: buildPRBody(nugget),
+		body: buildPRBody(nugget, scheduledFor),
 	});
 
 	return {
@@ -87,12 +88,15 @@ export async function createPullRequest(
 	};
 }
 
-function buildPRBody(nugget: GeneratedNugget): string {
+function buildPRBody(nugget: GeneratedNugget, scheduledFor?: string): string {
+	const scheduledInfo = scheduledFor ? `**Scheduled for:** ${scheduledFor} (publish after merge)` : '';
+	
 	return `## 🔥 New AI-Generated Nugget
 
 **Title:** ${nugget.frontmatter.title}  
 **Tags:** ${nugget.frontmatter.tags.join(', ')}  
 **Word Count:** ~${nugget.content.split(/\s+/).length} words
+${scheduledInfo ? `\n${scheduledInfo}\n` : ''}
 
 ### Review Checklist
 - [ ] Technical accuracy verified

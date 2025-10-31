@@ -1,5 +1,5 @@
 import type { Env, IdeaSeed, GeneratedNugget, NuggetFrontmatter } from './types';
-import { generateSlug, buildMDXFile, getISODate } from './utils';
+import { generateSlug, buildMDXFile, getDateString } from './utils';
 
 const SYSTEM_PROMPT = `You are an expert technical writer specializing in backend and AI engineering.
 Generate concise, high-signal engineering insights called "nuggets" for an experienced engineering audience.
@@ -53,12 +53,16 @@ export async function generateNugget(idea: IdeaSeed, env: Env): Promise<Generate
 
 	// Build frontmatter
 	const slug = generateSlug(idea.title);
+	const wordCount = content.split(/\s+/).length;
 	const frontmatter: NuggetFrontmatter = {
 		title: idea.title,
-		description: generateDescription(content),
-		pubDate: getISODate(),
+		summary: generateSummary(content),
+		date: getDateString(),
+		readTime: calculateReadTime(wordCount),
 		tags: idea.tags,
-		draft: true, // Always draft for PR workflow
+		published: false, // Always false for PR workflow (set to true after review)
+		generatedFrom: slug,
+		reviewed: false,
 	};
 
 	const fullMdx = buildMDXFile(frontmatter, content);
@@ -91,8 +95,8 @@ function buildUserPrompt(idea: IdeaSeed): string {
 	return prompt;
 }
 
-function generateDescription(content: string): string {
-	// Extract first meaningful sentence or paragraph as description
+function generateSummary(content: string): string {
+	// Extract first meaningful sentence or paragraph as summary
 	const lines = content.trim().split('\n').filter(line => line.trim().length > 0);
 	
 	for (const line of lines) {
@@ -108,4 +112,13 @@ function generateDescription(content: string): string {
 	}
 
 	return content.substring(0, 160).trim() + '...';
+}
+
+/**
+ * Calculate read time based on word count
+ * Assumes average reading speed of ~200 words per minute
+ */
+function calculateReadTime(wordCount: number): string {
+	const minutes = Math.max(1, Math.ceil(wordCount / 200));
+	return `${minutes} min`;
 }

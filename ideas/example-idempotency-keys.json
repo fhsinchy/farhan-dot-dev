@@ -8,5 +8,6 @@
   ],
   "context": "Payment APIs are prone to network failures and retries, which can lead to duplicate charges if not handled properly",
   "targetAudience": "Backend engineers building payment integrations",
-  "codeExample": true
+  "codeExample": true,
+  "risk": "low"
 }

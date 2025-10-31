@@ -5,6 +5,7 @@ export interface Env {
 	GITHUB_TOKEN: string;
 	WORKER_API_KEY: string;
 	NUGGET_STORE: KVNamespace<string>;
+	IDEA_QUEUE: KVNamespace<string>; // Stage 1: Scheduler queue
 	GITHUB_REPO: string;
 	GITHUB_BRANCH_PREFIX: string;
 	RATE_LIMIT_PER_HOUR: string;
@@ -17,6 +18,7 @@ export interface IdeaSeed {
 	context?: string;
 	targetAudience?: string;
 	codeExample?: boolean;
+	risk?: 'low' | 'high'; // Defaults to 'low' if not specified
 }
 
 export interface NuggetRequest {
@@ -26,10 +28,13 @@ export interface NuggetRequest {
 
 export interface NuggetFrontmatter {
 	title: string;
-	description: string;
-	pubDate: string;
+	summary: string;
+	date: string; // YAML date format: YYYY-MM-DD
+	readTime: string;
 	tags: string[];
-	draft: boolean;
+	published: boolean;
+	generatedFrom?: string; // Idea slug for tracking
+	reviewed?: boolean; // Whether human reviewed (for Stage 2)
 }
 
 export interface GeneratedNugget {
@@ -53,4 +58,15 @@ export interface APIResponse {
 		pr?: GitHubPRResponse;
 	};
 	error?: string;
+}
+
+// Stage 1: Queue management types
+export type IdeaStatus = 'pending' | 'in-progress' | 'awaiting-review' | 'published' | 'skipped';
+
+export interface IdeaWithStatus extends IdeaSeed {
+	status: IdeaStatus;
+	createdAt?: string; // ISO timestamp
+	prUrl?: string; // If status is 'awaiting-review'
+	prNumber?: number;
+	generatedAt?: string; // ISO timestamp when nugget was generated
 }
