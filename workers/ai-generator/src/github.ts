@@ -137,3 +137,23 @@ async function githubAPI(
 
 	return response.json();
 }
+
+/**
+ * Check if a PR has been merged
+ */
+export async function checkPRStatus(prNumber: number, env: Env): Promise<boolean> {
+	const [owner, repo] = env.GITHUB_REPO.split('/');
+	
+	try {
+		const prResponse = await githubAPI(
+			`/repos/${owner}/${repo}/pulls/${prNumber}`,
+			'GET',
+			env.GITHUB_TOKEN
+		);
+		
+		return prResponse.merged === true;
+	} catch (error) {
+		console.error(`Error checking PR #${prNumber}:`, error);
+		return false;
+	}
+}
