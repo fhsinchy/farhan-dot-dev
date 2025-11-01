@@ -1,0 +1,10 @@
+{
+    "title": "When Caching Makes You Slower",
+    "topic": "Examines cases where cache lookups or serialization overhead hurt performance more than direct computation.",
+    "tags": ["backend", "performance", "caching"],
+    "context": "Caching isn’t free — latency, serialization, and invalidation all add complexity.",
+    "targetAudience": "Backend engineers optimizing APIs or microservices",
+    "codeExample": false,
+    "risk": "low"
+  }
+  

@@ -1,0 +1,10 @@
+{
+    "title": "The Hidden Cost of Background Jobs",
+    "topic": "Discusses the operational overhead of background processing — from retries to orphaned tasks and delayed queues.",
+    "tags": ["backend", "jobs", "infra"],
+    "context": "Async jobs often start simple but grow complex with scale. Knowing the hidden costs helps keep systems predictable.",
+    "targetAudience": "Backend developers using job queues (BullMQ, Sidekiq, etc.)",
+    "codeExample": false,
+    "risk": "low"
+  }
+  

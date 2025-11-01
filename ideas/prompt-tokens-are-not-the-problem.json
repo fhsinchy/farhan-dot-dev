@@ -1,0 +1,10 @@
+{
+    "title": "Prompt Tokens Are Not the Problem",
+    "topic": "Explains how focusing on token counts misses the real cost drivers in LLM workloads — latency and throughput.",
+    "tags": ["ai-engineering", "llm", "cost-optimization"],
+    "context": "Token obsession hides the real metrics: latency and cost per request pipeline.",
+    "targetAudience": "AI developers managing LLM inference pipelines",
+    "codeExample": false,
+    "risk": "low"
+  }
+  

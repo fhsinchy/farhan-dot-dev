@@ -1,0 +1,10 @@
+{
+    "title": "LLM Guardrails Start with Schema, Not Prompts",
+    "topic": "Shows how input/output schemas enforce predictable LLM behavior before relying on prompt engineering.",
+    "tags": ["ai-engineering", "guardrails", "pydantic", "validation"],
+    "context": "Prompt engineering can’t catch everything — schemas and validators can.",
+    "targetAudience": "Developers integrating LLMs into production apps",
+    "codeExample": true,
+    "risk": "low"
+  }
+  

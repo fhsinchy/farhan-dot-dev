@@ -1,0 +1,10 @@
+{
+    "title": "Retry Budgets That Don’t DDoS You",
+    "topic": "How to design retry mechanisms that prevent your own services from overwhelming themselves under partial failure.",
+    "tags": ["backend", "reliability", "resilience"],
+    "context": "Retries help transient failures, but without budgets or jitter, they can take you down faster than the outage itself.",
+    "targetAudience": "Backend engineers working with distributed systems",
+    "codeExample": true,
+    "risk": "low"
+  }
+  

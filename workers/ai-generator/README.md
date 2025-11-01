@@ -1,6 +1,6 @@
 # AI Nugget Generator Worker
 
-Cloudflare Worker that generates technical "nuggets" using OpenAI and creates GitHub PRs for review.
+Cloudflare Worker that automatically generates technical "nuggets" using OpenAI and creates GitHub PRs on a schedule.
 
 ## Quick Start
 
@@ -8,8 +8,10 @@ Cloudflare Worker that generates technical "nuggets" using OpenAI and creates Gi
 # Install dependencies (from project root)
 npm install
 
-# Create KV namespace
+# Create KV namespaces
 wrangler kv:namespace create "NUGGET_STORE"
+wrangler kv:namespace create "IDEA_QUEUE"
+# Update wrangler.toml with the IDEA_QUEUE namespace ID
 
 # Set secrets
 wrangler secret put OPENAI_API_KEY --config workers/ai-generator/wrangler.toml
@@ -22,6 +24,25 @@ npm run worker:dev
 npm run worker:deploy
 ```
 
+## Loading Ideas into Queue
+
+Ideas are loaded directly into KV using wrangler CLI (no public API needed):
+
+```bash
+# Load a single idea
+cd workers/ai-generator
+npm run load-idea -- ../../ideas/example-idempotency-keys.json
+
+# Load all ideas from ideas/ directory
+npm run load-ideas
+
+# Or manually using wrangler
+wrangler kv:key put "idea:my-slug" '{"title":"...","status":"pending",...}' \
+  --binding IDEA_QUEUE --namespace-id YOUR_NAMESPACE_ID
+```
+
+The cron scheduler will automatically process ideas from the queue (Mon/Wed/Fri at 09:00 UTC).
+
 ## Environment Setup
 
 ### Required Secrets
@@ -29,9 +50,10 @@ npm run worker:deploy
 - `OPENAI_API_KEY` - OpenAI API key with GPT-4 access
 - `GITHUB_TOKEN` - GitHub Personal Access Token with `repo` scope
 
-### Required KV Namespace
+### Required KV Namespaces
 
 - `NUGGET_STORE` - For rate limiting and generation tracking
+- `IDEA_QUEUE` - For storing ideas that will be processed by the cron scheduler
 
 ### Environment Variables (in wrangler.toml)
 
@@ -43,7 +65,7 @@ npm run worker:deploy
 
 ### `GET /ai/health`
 
-Health check endpoint.
+Health check endpoint (public).
 
 **Response:**
 ```json
@@ -53,24 +75,15 @@ Health check endpoint.
 }
 ```
 
-### `POST /ai/generate-nugget`
+### Cron Scheduler
 
-Generate a nugget and create a PR.
+The Worker runs automatically via cron trigger (Mon/Wed/Fri 09:00 UTC) to:
+1. Pick the next pending idea from `IDEA_QUEUE`
+2. Generate the nugget using OpenAI
+3. Create a GitHub PR
+4. Mark idea as `awaiting-review`
 
-**Request:**
-```json
-{
-  "idea": {
-    "title": "Your Nugget Title",
-    "topic": "Technical topic to cover",
-    "tags": ["tag1", "tag2"],
-    "context": "Optional context",
-    "codeExample": true
-  }
-}
-```
-
-**Response:** See [AI Pipeline Documentation](../../docs/ai-pipeline.md)
+**Note:** There is no public API for generating nuggets. All ideas must be loaded into KV first, then processed by the scheduler.
 
 ## Development
 
@@ -88,10 +101,17 @@ cd workers/ai-generator && npx tsc --noEmit
 ## Architecture
 
 ```
-Request → Worker → OpenAI API → Generate Content
-                 → GitHub API → Create PR
-                 → KV Store → Log & Rate Limit
+Idea JSON → wrangler CLI → KV (IDEA_QUEUE) → Cron Scheduler → OpenAI API → Generate Content
+                                                              → GitHub API → Create PR
+                                                              → KV Store → Log & Track
 ```
+
+**Workflow:**
+1. Create idea JSON file in `ideas/` directory
+2. Load idea into KV queue using wrangler CLI
+3. Cron scheduler picks up pending ideas automatically
+4. Worker generates nugget and creates PR
+5. You review and merge PR
 
 ## File Structure
 
@@ -110,16 +130,15 @@ workers/ai-generator/
 ## Testing
 
 ```bash
-# Test generation
-curl -X POST http://localhost:8787/ai/generate-nugget \
-  -H "Content-Type: application/json" \
-  -d '{
-    "idea": {
-      "title": "Test Nugget",
-      "topic": "Testing",
-      "tags": ["testing"]
-    }
-  }'
+# Test health endpoint
+curl http://localhost:8787/ai/health
+
+# Test idea loading (local dev)
+cd workers/ai-generator
+./scripts/load-idea.sh ../../ideas/example-idempotency-keys.json
+
+# View logs
+wrangler tail
 ```
 
 ## Troubleshooting

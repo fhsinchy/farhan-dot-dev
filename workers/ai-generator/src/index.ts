@@ -74,7 +74,7 @@ export default {
 			return new Response(null, { headers: corsHeaders });
 		}
 
-		// Route handling
+		// Route handling (all endpoints are private/authenticated)
 		if (url.pathname === '/ai/load-idea' && request.method === 'POST') {
 			return handleLoadIdea(request, env, corsHeaders);
 		}
