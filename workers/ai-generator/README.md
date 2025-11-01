@@ -59,21 +59,8 @@ The cron scheduler will automatically process ideas from the queue (Mon/Wed/Fri 
 
 - `GITHUB_REPO` - Repository in format `owner/repo`
 - `GITHUB_BRANCH_PREFIX` - Prefix for PR branches (e.g., `nuggets`)
-- `RATE_LIMIT_PER_HOUR` - Max requests per hour per IP
 
-## API Endpoints
-
-### `GET /ai/health`
-
-Health check endpoint (public).
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "AI Worker is healthy"
-}
-```
+## How It Works
 
 ### Cron Scheduler
 
@@ -83,7 +70,7 @@ The Worker runs automatically via cron trigger (Mon/Wed/Fri 09:00 UTC) to:
 3. Create a GitHub PR
 4. Mark idea as `awaiting-review`
 
-**Note:** There is no public API for generating nuggets. All ideas must be loaded into KV first, then processed by the scheduler.
+**Note:** There are no public API endpoints. The Worker only runs via cron scheduler. All idea loading is done via wrangler CLI scripts (see "Loading Ideas into Queue" above).
 
 ## Development
 
@@ -130,15 +117,15 @@ workers/ai-generator/
 ## Testing
 
 ```bash
-# Test health endpoint
-curl http://localhost:8787/ai/health
-
-# Test idea loading (local dev)
+# Load ideas into queue (local dev)
 cd workers/ai-generator
-./scripts/load-idea.sh ../../ideas/example-idempotency-keys.json
+npm run load-ideas
 
 # View logs
 wrangler tail
+
+# Test locally
+npm run dev
 ```
 
 ## Troubleshooting

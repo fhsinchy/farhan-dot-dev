@@ -1,6 +1,6 @@
-import type { Env, APIResponse, IdeaSeed } from './types';
-import { validateIdeaSeed, generateSlug } from './utils';
-import { getNextPendingIdea, markIdeaStatus, addIdeaToQueue } from './queue';
+import type { Env } from './types';
+import { generateSlug } from './utils';
+import { getNextPendingIdea, markIdeaStatus } from './queue';
 import { generateNugget } from './openai';
 import { createPullRequest } from './github';
 
@@ -60,110 +60,8 @@ export const scheduled = async (event: ScheduledEvent, env: Env, ctx: ExecutionC
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
-		const url = new URL(request.url);
-
-		// CORS headers
-		const corsHeaders = {
-			'Access-Control-Allow-Origin': '*',
-			'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-			'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-		};
-
-		// Handle CORS preflight
-		if (request.method === 'OPTIONS') {
-			return new Response(null, { headers: corsHeaders });
-		}
-
-		// Route handling (all endpoints are private/authenticated)
-		if (url.pathname === '/ai/load-idea' && request.method === 'POST') {
-			return handleLoadIdea(request, env, corsHeaders);
-		}
-
-		if (url.pathname === '/ai/health' && request.method === 'GET') {
-			return jsonResponse({ success: true, message: 'AI Worker is healthy' }, 200, corsHeaders);
-		}
-
-		return jsonResponse(
-			{ success: false, error: 'Not Found' },
-			404,
-			corsHeaders
-		);
+		// No public API endpoints - Worker only runs via cron scheduler
+		// All idea loading is done via wrangler CLI
+		return new Response('Not Found', { status: 404 });
 	},
 };
-
-async function handleLoadIdea(
-	request: Request,
-	env: Env,
-	corsHeaders: Record<string, string>
-): Promise<Response> {
-	try {
-		// Authentication check
-		const authHeader = request.headers.get('Authorization');
-		const expectedAuth = `Bearer ${env.WORKER_API_KEY}`;
-		
-		if (!authHeader || authHeader !== expectedAuth) {
-			return jsonResponse(
-				{ success: false, error: 'Unauthorized' },
-				401,
-				corsHeaders
-			);
-		}
-
-		// Parse request body (expects { idea: IdeaSeed } or just IdeaSeed)
-		const body = await request.json() as { idea?: IdeaSeed } | IdeaSeed;
-		const idea: IdeaSeed = (body as { idea?: IdeaSeed }).idea || (body as IdeaSeed);
-
-		// Validate idea seed
-		const validationError = validateIdeaSeed(idea);
-		if (validationError) {
-			return jsonResponse(
-				{ success: false, error: `Invalid idea seed: ${validationError}` },
-				400,
-				corsHeaders
-			);
-		}
-
-		// Add to queue
-		const slug = await addIdeaToQueue(env.IDEA_QUEUE, idea);
-
-		return jsonResponse(
-			{
-				success: true,
-				message: 'Idea added to queue successfully',
-				data: {
-					slug,
-					idea: {
-						title: idea.title,
-						status: 'pending',
-					},
-				},
-			},
-			201,
-			corsHeaders
-		);
-	} catch (error) {
-		console.error('Error loading idea:', error);
-		return jsonResponse(
-			{
-				success: false,
-				error: error instanceof Error ? error.message : 'Internal server error',
-			},
-			500,
-			corsHeaders
-		);
-	}
-}
-
-function jsonResponse(
-	data: APIResponse,
-	status: number,
-	headers: Record<string, string>
-): Response {
-	return new Response(JSON.stringify(data, null, 2), {
-		status,
-		headers: {
-			'Content-Type': 'application/json',
-			...headers,
-		},
-	});
-}
