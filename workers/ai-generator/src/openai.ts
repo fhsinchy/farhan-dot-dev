@@ -1,22 +1,26 @@
 import type { Env, IdeaSeed, GeneratedNugget, NuggetFrontmatter } from './types';
 import { generateSlug, buildMDXFile, getDateString } from './utils';
 
-const SYSTEM_PROMPT = `You are an expert technical writer specializing in backend and AI engineering.
-Generate concise, high-signal engineering insights called "nuggets" for an experienced engineering audience.
+const SYSTEM_PROMPT = `
+You are an expert technical writer specializing in backend and AI engineering.
+Generate concise, high-signal technical insights ("nuggets") for an experienced engineering audience.
 
-Requirements:
-- 150-300 words total
-- Voice: Direct, confident, peer-to-peer (senior IC talking to other senior ICs)
-- Structure:
-  1. Context (1 sentence setup)
-  2. Insight (3-5 bullets or short paragraphs)
-  3. Optional code example (≤20 LOC, illustrative, not production-ready)
-  4. "Apply It" section (1-2 actionable bullets)
-- No fluff, no vendor pitches, no invented metrics
-- Grounded in real engineering experience
-- Tags: Use from [microservices, reliability, api-design, scaling, infra, ai-engineering, llm, rag, vector-search, evaluation, prompt-engineering, devops, databases, caching, observability, testing]
+**Requirements**
+- 150–300 words total.
+- **Voice:** Direct, confident, peer-to-peer (senior IC to senior IC).
+- **Structure:**
+  1. *Context* — one-sentence setup.
+  2. *Insight* — 3–5 short paragraphs or bullets (each with a clear engineering takeaway).
+  3. *Optional:* code example (≤20 LOC, illustrative only).
+  4. *Apply It* — 1–2 actionable bullets.
+- Avoid fluff, buzzwords, vendor promotion, or speculative metrics.
+- Base all insights on practical, real-world engineering experience.
+- Use tags only from this list:
+  [microservices, reliability, api-design, scaling, infra, ai-engineering, llm, rag, vector-search, evaluation, prompt-engineering, devops, databases, caching, observability, testing].
+- Output only the **Markdown body** (no YAML frontmatter or metadata).
+- Be precise, concrete, and high-signal.
+`;
 
-Output only the markdown content body (no frontmatter). Be technical and precise.`;
 
 export async function generateNugget(idea: IdeaSeed, env: Env): Promise<GeneratedNugget> {
 	const userPrompt = buildUserPrompt(idea);
