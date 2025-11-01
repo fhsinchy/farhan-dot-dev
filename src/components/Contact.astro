@@ -14,7 +14,7 @@ const contactMethods = [
     label: 'Email',
     value: authorEmail,
     href: `mailto:${authorEmail}`,
-    description: 'For writing inquiries and collaborations',
+    description: 'For project inquiries and collaborations',
   },
   {
     icon: Github,
@@ -45,7 +45,7 @@ const contactMethods = [
     <div class="text-center mb-12">
       <h2 class="mb-4 text-foreground">Get in Touch</h2>
       <p class="text-lg text-muted-foreground">
-        Open to technical writing opportunities, backend/AI consulting, and speaking engagements.
+        Open to building backend/AI systems, technical writing, and consulting engagements.
       </p>
     </div>
 
@@ -75,13 +75,13 @@ const contactMethods = [
     </div>
 
     <div class="p-8 rounded-lg border border-border bg-muted/30 text-center">
-      <h3 class="mb-3 text-foreground">Looking for a Technical Writer?</h3>
+      <h3 class="mb-3 text-foreground">Need a Backend or AI System Built?</h3>
       <p class="mb-6 text-muted-foreground max-w-2xl mx-auto">
-        I write in-depth technical content on backend systems, AI/ML, and DevOps. 
-        Published on freeCodeCamp (500k+ views), MongoDB, Honeybadger, and Adeva.
+        I build production-ready backend systems, AI/ML applications, and scalable APIs. 
+        Available for full project development, consulting, and technical writing.
       </p>
       <a
-        href="mailto:farhan@farhan.dev"
+        href={`mailto:${authorEmail}`}
         class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary hover:bg-accent hover:text-white text-primary-foreground transition-colors font-medium"
       >
         <Mail size={18} />
