@@ -1,0 +1,13 @@
+{
+  "title": "How to Version APIs Without Breaking Clients",
+  "topic": "Outlines non-breaking API evolution strategies like additive versioning and negotiation.",
+  "tags": [
+    "backend",
+    "api-design",
+    "scaling"
+  ],
+  "context": "APIs evolve, but users expect stability. Versioning right keeps both happy.",
+  "targetAudience": "API developers and architects",
+  "codeExample": false,
+  "risk": "low"
+}

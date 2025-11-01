@@ -1,0 +1,10 @@
+{
+    "title": "Backpressure Is Not an Error",
+    "topic": "Explains why backpressure signals system health and how to design APIs and queues to handle it gracefully.",
+    "tags": ["backend", "scaling", "queues"],
+    "context": "Instead of fighting backpressure, flow-control it. Systems that slow down survive longer.",
+    "targetAudience": "Backend and SRE engineers handling load spikes",
+    "codeExample": true,
+    "risk": "low"
+  }
+  

@@ -1,0 +1,13 @@
+{
+  "title": "Vector Similarity Isn\u2019t Always Relevance",
+  "topic": "Distinguishes between mathematical similarity and semantic usefulness in vector search.",
+  "tags": [
+    "ai-engineering",
+    "vector-search",
+    "rag"
+  ],
+  "context": "High cosine similarity doesn\u2019t always mean the most relevant context.",
+  "targetAudience": "Developers using embeddings for retrieval systems",
+  "codeExample": false,
+  "risk": "low"
+}

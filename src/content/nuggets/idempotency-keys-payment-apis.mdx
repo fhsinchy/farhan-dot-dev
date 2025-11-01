@@ -1,0 +1,144 @@
+---
+title: "Idempotency Keys in Payment APIs"
+summary: "Never charge a customer twice. How to implement idempotency tokens in your payment processing pipeline."
+tags: ["Backend", "Payments", "API Design"]
+date: 2025-10-18
+readTime: "3 min"
+published: true
+---
+
+## The Problem
+
+You're building a payment API. A customer clicks "Pay Now" but their network hiccups. They click again. Suddenly, they've been charged twice. Nightmare scenario.
+
+## The Solution: Idempotency Keys
+
+An idempotency key is a unique identifier sent with each request. If the server receives the same key twice, it returns the cached result instead of processing the request again.
+
+```python
+from flask import Flask, request, jsonify
+import hashlib
+import json
+
+app = Flask(__name__)
+payment_cache = {}
+
+@app.route('/api/payments', methods=['POST'])
+def process_payment():
+    # Get idempotency key from headers
+    idempotency_key = request.headers.get('Idempotency-Key')
+    
+    if not idempotency_key:
+        return jsonify({'error': 'Missing Idempotency-Key header'}), 400
+    
+    # Check if we've processed this request before
+    if idempotency_key in payment_cache:
+        return jsonify(payment_cache[idempotency_key]), 200
+    
+    # Process the payment
+    payment_data = request.json
+    result = charge_customer(payment_data)
+    
+    # Cache the result
+    payment_cache[idempotency_key] = result
+    
+    return jsonify(result), 201
+
+def charge_customer(payment_data):
+    # Your actual payment processing logic here
+    return {
+        'transaction_id': hashlib.sha256(
+            json.dumps(payment_data).encode()
+        ).hexdigest()[:16],
+        'status': 'success',
+        'amount': payment_data['amount']
+    }
+```
+
+## Key Implementation Details
+
+### 1. Client-Side Key Generation
+
+```javascript
+async function submitPayment(paymentData) {
+  const idempotencyKey = crypto.randomUUID();
+  
+  const response = await fetch('/api/payments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey
+    },
+    body: JSON.stringify(paymentData)
+  });
+  
+  return response.json();
+}
+```
+
+### 2. Server-Side Caching
+
+Store idempotency keys with an expiration (24 hours is common):
+
+```python
+import redis
+from datetime import timedelta
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+def cache_payment_result(idempotency_key, result):
+    redis_client.setex(
+        f"payment:{idempotency_key}",
+        timedelta(hours=24),
+        json.dumps(result)
+    )
+
+def get_cached_result(idempotency_key):
+    cached = redis_client.get(f"payment:{idempotency_key}")
+    return json.loads(cached) if cached else None
+```
+
+### 3. Race Condition Handling
+
+Use Redis locks to prevent concurrent processing:
+
+```python
+def process_payment_with_lock(idempotency_key, payment_data):
+    lock_key = f"lock:{idempotency_key}"
+    
+    # Try to acquire lock
+    if redis_client.set(lock_key, "1", nx=True, ex=60):
+        try:
+            # Check cache again (double-check pattern)
+            cached = get_cached_result(idempotency_key)
+            if cached:
+                return cached
+            
+            # Process payment
+            result = charge_customer(payment_data)
+            cache_payment_result(idempotency_key, result)
+            
+            return result
+        finally:
+            redis_client.delete(lock_key)
+    else:
+        # Another request is processing, wait and retry
+        time.sleep(0.1)
+        return get_cached_result(idempotency_key)
+```
+
+## Production Checklist
+
+- ✅ Generate keys client-side (UUID v4 or similar)
+- ✅ Validate key format server-side
+- ✅ Use persistent storage (Redis, PostgreSQL) not in-memory dict
+- ✅ Set appropriate TTL (24h recommended)
+- ✅ Handle race conditions with locks
+- ✅ Return 409 Conflict if same key used with different payload
+- ✅ Log idempotency key usage for debugging
+
+## The Takeaway
+
+Idempotency keys are your insurance policy against duplicate charges. They're simple to implement and save you from angry customers and support nightmares.
+
+**Rule of thumb**: Any API endpoint that creates resources or triggers actions (especially payments) should support idempotency keys.

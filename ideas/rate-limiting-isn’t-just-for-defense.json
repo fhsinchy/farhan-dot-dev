@@ -1,0 +1,13 @@
+{
+  "title": "Rate Limiting Isn\u2019t Just for Defense",
+  "topic": "Explores how rate limiting can shape user behavior and improve reliability.",
+  "tags": [
+    "backend",
+    "api-design",
+    "reliability"
+  ],
+  "context": "A good rate limiter protects uptime\u2014and user experience.",
+  "targetAudience": "Engineers designing public or internal APIs",
+  "codeExample": true,
+  "risk": "low"
+}

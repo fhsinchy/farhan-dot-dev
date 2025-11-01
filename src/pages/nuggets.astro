@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import NuggetsComponent from '../components/Nuggets.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Engineering Nuggets - Farhan Hasin Chowdhury">
+	<div class="min-h-screen bg-background text-foreground">
+		<Header />
+		<main id="main-content">
+			<NuggetsComponent />
+		</main>
+		<Footer />
+	</div>
+</Layout>

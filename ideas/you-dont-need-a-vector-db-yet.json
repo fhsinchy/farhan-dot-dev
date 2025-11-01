@@ -1,0 +1,9 @@
+{
+  "title": "You Don’t Need a Vector DB (Yet)",
+  "topic": "Highlights when plain Postgres with pgvector or SQLite’s extensions are perfectly fine for early-stage RAG setups.",
+  "tags": ["ai-engineering", "vector-search", "rag"],
+  "context": "Vector databases are useful — but not every project needs one.",
+  "targetAudience": "Developers prototyping LLM-based retrieval systems",
+  "codeExample": false,
+  "risk": "low"
+}

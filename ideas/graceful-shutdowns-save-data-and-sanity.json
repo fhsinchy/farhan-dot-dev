@@ -1,0 +1,13 @@
+{
+  "title": "Graceful Shutdowns Save Data (and Sanity)",
+  "topic": "Teaches how to handle SIGTERM signals to prevent partial writes and data loss.",
+  "tags": [
+    "backend",
+    "infra",
+    "reliability"
+  ],
+  "context": "Every container dies eventually\u2014graceful shutdowns prevent chaos.",
+  "targetAudience": "Engineers deploying microservices to containers or functions",
+  "codeExample": true,
+  "risk": "low"
+}

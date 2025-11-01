@@ -1,0 +1,114 @@
+---
+import { Mail, Send } from 'lucide-astro';
+
+const newsletterApiUrl = import.meta.env.PUBLIC_NEWSLETTER_API_URL;
+const isConfigured = !!newsletterApiUrl;
+---
+
+<section class="min-h-screen flex items-center justify-center py-20 px-6 pt-32">
+  <div class="max-w-2xl mx-auto text-center">
+    <div class="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary">
+      <Mail size={32} />
+    </div>
+
+    <h2 class="mb-4 text-foreground">Weekly Engineering Digest</h2>
+    
+    <p class="mb-8 text-lg text-muted-foreground">
+      Get two engineering nuggets every week — one on backend systems, one on AI. 
+      Practical insights from production systems, delivered every Sunday.
+    </p>
+
+    <div class="mb-8 p-6 rounded-lg border border-border bg-muted/30 text-left">
+      <h4 class="mb-3 text-foreground">What You'll Get</h4>
+      <ul class="space-y-2 text-muted-foreground">
+        <li class="flex items-start gap-2">
+          <span class="text-primary mt-1">•</span>
+          <span>2 nuggets per week: backend + AI engineering</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary mt-1">•</span>
+          <span>Code snippets you can use immediately</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary mt-1">•</span>
+          <span>Lessons from real production systems</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary mt-1">•</span>
+          <span>No spam, unsubscribe anytime</span>
+        </li>
+      </ul>
+    </div>
+
+    <div id="newsletter-form-container">
+      <form id="newsletter-form" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input
+          type="email"
+          placeholder="your@email.com"
+          id="newsletter-email"
+          required
+          class="flex-1 px-4 py-3 rounded-md bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary hover:bg-accent text-primary-foreground transition-colors font-medium"
+        >
+          Subscribe
+          <Send size={18} />
+        </button>
+      </form>
+    </div>
+
+    <div id="newsletter-success" class="hidden p-6 rounded-lg border border-primary bg-primary/10">
+      <p class="text-primary">
+        Thanks for subscribing! Check your email to confirm your subscription.
+      </p>
+    </div>
+
+    <p class="mt-6 text-sm text-muted-foreground">
+      Powered by Buttondown • Privacy-first • No tracking
+    </p>
+  </div>
+</section>
+
+<script define:vars={{ newsletterApiUrl, isConfigured }}>
+  const form = document.getElementById('newsletter-form') as HTMLFormElement;
+  const formContainer = document.getElementById('newsletter-form-container');
+  const successMessage = document.getElementById('newsletter-success');
+  const emailInput = document.getElementById('newsletter-email') as HTMLInputElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (isConfigured && newsletterApiUrl) {
+      try {
+        // Make actual API call when configured
+        const response = await fetch(newsletterApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: emailInput.value,
+          }),
+        });
+
+        if (response.ok) {
+          formContainer?.classList.add('hidden');
+          successMessage?.classList.remove('hidden');
+          if (emailInput) emailInput.value = '';
+        } else {
+          alert('Subscription failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Newsletter subscription error:', error);
+        alert('An error occurred. Please try again later.');
+      }
+    } else {
+      // Demo mode - just show success message
+      formContainer?.classList.add('hidden');
+      successMessage?.classList.remove('hidden');
+      if (emailInput) emailInput.value = '';
+    }
+  });
+</script>

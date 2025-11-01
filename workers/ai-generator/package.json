@@ -1,0 +1,17 @@
+{
+  "name": "ai-nugget-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "load-ideas": "tsx scripts/load-ideas-batch.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "tsx": "^4.19.1",
+    "wrangler": "^3.114.15"
+  }
+}

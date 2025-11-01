@@ -1,0 +1,10 @@
+{
+    "title": "CI/CD for Prompts: The Missing Practice",
+    "topic": "Proposes using prompt versioning, regression tests, and evaluation sets like traditional software pipelines.",
+    "tags": ["ai-engineering", "evaluation", "devops"],
+    "context": "Prompt changes need tests too — otherwise your app’s behavior shifts invisibly.",
+    "targetAudience": "Engineers maintaining AI-driven products",
+    "codeExample": false,
+    "risk": "low"
+  }
+  

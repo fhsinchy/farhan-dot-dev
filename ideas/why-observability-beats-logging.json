@@ -1,0 +1,13 @@
+{
+  "title": "Why Observability Beats Logging",
+  "topic": "Shows how structured events and traces outperform traditional logs for debugging distributed systems.",
+  "tags": [
+    "observability",
+    "backend",
+    "reliability"
+  ],
+  "context": "Logs tell you what happened. Observability tells you why.",
+  "targetAudience": "SREs and backend engineers",
+  "codeExample": false,
+  "risk": "low"
+}

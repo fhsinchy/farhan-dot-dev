@@ -1,0 +1,13 @@
+{
+  "title": "The Latency Budget Framework",
+  "topic": "Teaches how to allocate latency budgets across services for consistent SLAs.",
+  "tags": [
+    "backend",
+    "scaling",
+    "reliability"
+  ],
+  "context": "Without explicit latency budgets, systems degrade silently over time.",
+  "targetAudience": "Backend engineers designing distributed systems",
+  "codeExample": false,
+  "risk": "low"
+}

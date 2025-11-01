@@ -1,0 +1,13 @@
+{
+  "title": "Your Nugget Title (concise, descriptive)",
+  "topic": "Brief description of what this nugget covers (1-2 sentences)",
+  "tags": [
+    "tag1",
+    "tag2",
+    "tag3"
+  ],
+  "context": "Optional: Additional context to help the AI understand the topic and its relevance",
+  "targetAudience": "Optional: Who should read this (e.g., 'Backend engineers', 'AI engineers')",
+  "codeExample": false,
+  "risk": "low"
+}

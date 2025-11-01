@@ -1,0 +1,92 @@
+---
+import { Github, Linkedin, Mail, Twitter } from 'lucide-astro';
+
+const authorEmail = import.meta.env.PUBLIC_AUTHOR_EMAIL || 'hello@example.com';
+const githubUrl = import.meta.env.PUBLIC_GITHUB_URL || 'https://github.com';
+const linkedinUrl = import.meta.env.PUBLIC_LINKEDIN_URL || 'https://linkedin.com';
+const twitterHandle = import.meta.env.PUBLIC_TWITTER_HANDLE || '@yourhandle';
+const twitterUrl = `https://twitter.com/${twitterHandle.replace('@', '')}`;
+const authorName = import.meta.env.PUBLIC_AUTHOR_NAME || 'Your Name';
+
+const contactMethods = [
+  {
+    icon: Mail,
+    label: 'Email',
+    value: authorEmail,
+    href: `mailto:${authorEmail}`,
+    description: 'For project inquiries and collaborations',
+  },
+  {
+    icon: Github,
+    label: 'GitHub',
+    value: githubUrl.replace('https://github.com/', '@'),
+    href: githubUrl,
+    description: 'Check out my open source work',
+  },
+  {
+    icon: Linkedin,
+    label: 'LinkedIn',
+    value: authorName,
+    href: linkedinUrl,
+    description: 'Connect professionally',
+  },
+  {
+    icon: Twitter,
+    label: 'Twitter',
+    value: twitterHandle,
+    href: twitterUrl,
+    description: 'Follow for daily insights',
+  },
+];
+---
+
+<section class="min-h-screen flex items-center justify-center py-20 px-6 pt-32">
+  <div class="max-w-4xl mx-auto w-full">
+    <div class="text-center mb-12">
+      <h2 class="mb-4 text-foreground">Get in Touch</h2>
+      <p class="text-lg text-muted-foreground">
+        Open to building backend/AI systems, technical writing, and consulting engagements.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-12">
+      {contactMethods.map((method) => {
+        const Icon = method.icon;
+        return (
+          <a
+            href={method.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
+          >
+            <div class="flex items-start gap-4">
+              <div class="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <Icon size={24} />
+              </div>
+              <div class="flex-1">
+                <h4 class="mb-1 text-foreground">{method.label}</h4>
+                <p class="mb-2 text-primary">{method.value}</p>
+                <p class="text-sm text-muted-foreground">{method.description}</p>
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+
+    <div class="p-8 rounded-lg border border-border bg-muted/30 text-center">
+      <h3 class="mb-3 text-foreground">Need a Backend or AI System Built?</h3>
+      <p class="mb-6 text-muted-foreground max-w-2xl mx-auto">
+        I build production-ready backend systems, AI/ML applications, and scalable APIs. 
+        Available for full project development, consulting, and technical writing.
+      </p>
+      <a
+        href={`mailto:${authorEmail}`}
+        class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary hover:bg-accent hover:text-white text-primary-foreground transition-colors font-medium"
+      >
+        <Mail size={18} />
+        Discuss a Project
+      </a>
+    </div>
+  </div>
+</section>

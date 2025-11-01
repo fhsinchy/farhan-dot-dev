@@ -1,0 +1,207 @@
+---
+import { getCollection } from 'astro:content';
+import { Calendar, Clock, Search } from 'lucide-astro';
+
+// Get all published nuggets, sorted by date (newest first)
+const allNuggets = await getCollection('nuggets', ({ data }) => {
+  return data.published !== false;
+});
+
+const nuggets = allNuggets.sort((a, b) => {
+  return b.data.date.getTime() - a.data.date.getTime();
+});
+
+// Prepare data for client-side search
+const searchData = nuggets.map(nugget => ({
+  slug: nugget.slug,
+  title: nugget.data.title,
+  summary: nugget.data.summary,
+  tags: nugget.data.tags,
+  date: nugget.data.date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  }),
+  readTime: nugget.data.readTime,
+  primaryTag: nugget.data.tags[0],
+}));
+---
+
+<section class="py-20 px-6 pt-32">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-12 text-center">
+      <h2 class="mb-4 text-foreground">Engineering Nuggets</h2>
+      <p class="text-muted-foreground text-lg">
+        Short, high-signal insights on backend and AI engineering. One core idea, code snippet, and takeaway.
+      </p>
+    </div>
+
+    <!-- Search Box -->
+    <div class="mb-8">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="flex-1 relative">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search size={20} class="text-muted-foreground" />
+          </div>
+          <input
+            type="text"
+            id="nugget-search"
+            placeholder="Search nuggets by title, tags, or content..."
+            class="w-full pl-12 pr-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            aria-label="Search nuggets"
+          />
+        </div>
+        <a 
+          href="/nuggets/tags"
+          class="flex items-center gap-2 px-4 py-3 rounded-lg bg-muted border border-border text-foreground hover:border-primary hover:text-primary transition-all whitespace-nowrap"
+          aria-label="Browse all topics"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.828 2.828 0 0 0 4 0l7.172-7.172a2.828 2.828 0 0 0 0-4z"/>
+            <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>
+          </svg>
+          <span class="hidden sm:inline">Topics</span>
+        </a>
+      </div>
+      <p id="search-results-count" class="text-sm text-muted-foreground" role="status" aria-live="polite">
+        Showing {nuggets.length} nugget{nuggets.length !== 1 ? 's' : ''}
+      </p>
+    </div>
+
+    <div id="nuggets-list" class="space-y-6">
+      {nuggets.map((nugget) => {
+        const primaryTag = nugget.data.tags[0];
+        return (
+          <div 
+            class="nugget-card p-6 rounded-lg border border-border bg-muted/30 hover:border-primary transition-all group"
+            data-slug={nugget.slug}
+          >
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+              <a 
+                href={`/nuggets/tags/${primaryTag}`}
+                class={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium transition-all hover:ring-2 hover:ring-primary ${
+                  primaryTag === 'Backend' 
+                    ? 'bg-primary border-transparent text-primary-foreground' 
+                    : 'bg-accent border-transparent text-primary-foreground'
+                }`}
+                aria-label={`View all ${primaryTag} articles`}
+              >
+                {primaryTag}
+              </a>
+              <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                <span class="flex items-center gap-1">
+                  <Calendar size={14} />
+                  {nugget.data.date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </span>
+                <span class="flex items-center gap-1">
+                  <Clock size={14} />
+                  {nugget.data.readTime}
+                </span>
+              </div>
+            </div>
+            
+            <a href={`/nuggets/${nugget.slug}`} class="block group-hover:text-primary transition-colors">
+              <h3 class="mb-2 text-foreground group-hover:text-primary transition-colors">
+                {nugget.data.title}
+              </h3>
+              
+              <p class="text-muted-foreground">
+                {nugget.data.summary}
+              </p>
+            </a>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- No Results Message -->
+    <div id="no-results" class="hidden text-center py-12">
+      <p class="text-muted-foreground text-lg mb-2">No nuggets found</p>
+      <p class="text-muted-foreground text-sm">Try adjusting your search terms</p>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ searchData }}>
+  // Wait for DOM and dynamically import Fuse.js
+  document.addEventListener('DOMContentLoaded', () => {
+    import('https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs').then(({ default: Fuse }) => {
+      // Initialize Fuse.js
+      const fuse = new Fuse(searchData, {
+        keys: [
+          { name: 'title', weight: 2 },
+          { name: 'summary', weight: 1.5 },
+          { name: 'tags', weight: 1 },
+        ],
+        threshold: 0.3,
+        ignoreLocation: true,
+      });
+
+      const searchInput = document.getElementById('nugget-search');
+      const noResults = document.getElementById('no-results');
+      const resultsCount = document.getElementById('search-results-count');
+      const allCards = document.querySelectorAll('.nugget-card');
+
+      function updateResults(query) {
+        if (!query.trim()) {
+          // Show all nuggets
+          allCards.forEach(card => {
+            card.style.display = 'block';
+          });
+          if (noResults) noResults.classList.add('hidden');
+          if (resultsCount) resultsCount.textContent = `Showing ${allCards.length} nugget${allCards.length !== 1 ? 's' : ''}`;
+          return;
+        }
+
+        // Search with Fuse.js
+        const results = fuse.search(query);
+        const matchingSlugs = new Set(results.map(r => r.item.slug));
+
+        let visibleCount = 0;
+        allCards.forEach(card => {
+          const slug = card.getAttribute('data-slug');
+          if (matchingSlugs.has(slug)) {
+            card.style.display = 'block';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        // Show/hide no results message
+        if (visibleCount === 0) {
+          if (noResults) noResults.classList.remove('hidden');
+          if (resultsCount) resultsCount.textContent = 'No results';
+        } else {
+          if (noResults) noResults.classList.add('hidden');
+          if (resultsCount) resultsCount.textContent = `Showing ${visibleCount} nugget${visibleCount !== 1 ? 's' : ''}`;
+        }
+      }
+
+      // Debounce search input
+      let debounceTimer;
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            updateResults(e.target.value);
+          }, 150);
+        });
+
+        // Clear search with Escape key
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            searchInput.value = '';
+            updateResults('');
+          }
+        });
+      }
+    }).catch(err => {
+      console.error('Failed to load Fuse.js:', err);
+    });
+  });
+</script>

@@ -1,0 +1,150 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { Calendar, Clock, Tag } from 'lucide-astro';
+import Comments from '../../components/Comments.astro';
+import { getKeywordsForTags } from '../../utils/seo-keywords';
+
+export async function getStaticPaths() {
+  const nuggets = await getCollection('nuggets', ({ data }) => {
+    return data.published !== false;
+  });
+
+  return nuggets.map((nugget) => ({
+    params: { slug: nugget.slug },
+    props: { nugget },
+  }));
+}
+
+type Props = {
+  nugget: CollectionEntry<'nuggets'>;
+};
+
+const { nugget } = Astro.props;
+const { Content } = await nugget.render();
+
+// Generate OG image path
+const ogImage = `/og/nuggets/${nugget.slug}.png`;
+
+// Get SEO keywords based on tags
+const articleKeywords = getKeywordsForTags(nugget.data.tags);
+---
+
+<Layout 
+  title={`${nugget.data.title} - Farhan Hasin Chowdhury`} 
+  description={nugget.data.summary}
+  ogImage={ogImage}
+  ogType="article"
+  keywords={articleKeywords}
+  article={{
+    publishedTime: nugget.data.date.toISOString(),
+    author: "Farhan Hasin Chowdhury",
+    tags: nugget.data.tags
+  }}
+>
+  <div class="min-h-screen bg-background text-foreground">
+    <Header />
+    
+    <main id="main-content">
+      <article class="py-20 px-6 pt-32">
+        <div class="max-w-3xl mx-auto">
+          <!-- Back Link -->
+          <a
+            href="/nuggets"
+            class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            Back to Nuggets
+          </a>
+
+          <!-- Post Header -->
+          <header class="mb-12">
+            <h1 class="mb-4 text-foreground">{nugget.data.title}</h1>
+          
+          <p class="mb-6 text-xl text-muted-foreground">
+            {nugget.data.summary}
+          </p>
+
+          <!-- Meta Information -->
+          <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <span class="flex items-center gap-1.5">
+              <Calendar size={16} />
+              {nugget.data.date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+              })}
+            </span>
+            <span class="flex items-center gap-1.5">
+              <Clock size={16} />
+              {nugget.data.readTime}
+            </span>
+          </div>
+
+          <!-- Tags -->
+          <div class="flex flex-wrap gap-2 mt-6">
+            {nugget.data.tags.map((tag) => (
+              <a 
+                href={`/nuggets/tags/${tag}`}
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-all"
+                aria-label={`View all ${tag} articles`}
+              >
+                <Tag size={12} />
+                {tag}
+              </a>
+            ))}
+          </div>
+        </header>
+
+        <!-- Post Content -->
+        <div class="prose prose-invert prose-lg max-w-none
+          prose-headings:font-semibold prose-headings:text-foreground
+          prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
+          prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
+          prose-p:text-muted-foreground prose-p:leading-relaxed
+          prose-a:text-primary prose-a:no-underline hover:prose-a:text-accent
+          prose-strong:text-foreground prose-strong:font-semibold
+          prose-code:text-sm prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+          prose-pre:bg-muted prose-pre:border prose-pre:border-border
+          prose-ul:text-muted-foreground prose-ol:text-muted-foreground
+          prose-li:marker:text-primary
+          prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground
+        ">
+          <Content />
+        </div>
+
+        <!-- Post Footer -->
+        <footer class="mt-16 pt-8 border-t border-border">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <a
+              href="/nuggets"
+              class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6"/>
+              </svg>
+              All Nuggets
+            </a>
+            
+            <a
+              href="/newsletter"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-accent hover:text-white transition-colors font-medium text-sm"
+            >
+              Get weekly nuggets via email
+            </a>
+          </div>
+        </footer>
+
+        <!-- Comments -->
+        <Comments />
+      </div>
+    </article>
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

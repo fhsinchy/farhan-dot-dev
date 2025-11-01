@@ -1,0 +1,13 @@
+{
+  "title": "Designing Idempotent APIs the Right Way",
+  "topic": "Shows how to safely handle retries and duplicates with idempotency keys and request tokens.",
+  "tags": [
+    "api-design",
+    "reliability",
+    "backend"
+  ],
+  "context": "Idempotency prevents double work\u2014but only if it\u2019s implemented right.",
+  "targetAudience": "Backend engineers building public APIs",
+  "codeExample": true,
+  "risk": "low"
+}

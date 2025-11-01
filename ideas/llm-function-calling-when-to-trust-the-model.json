@@ -1,0 +1,13 @@
+{
+  "title": "LLM Function Calling: When to Trust the Model",
+  "topic": "Clarifies when it\u2019s safe to let LLMs call functions and when to gate outputs.",
+  "tags": [
+    "ai-engineering",
+    "llm",
+    "prompt-engineering"
+  ],
+  "context": "Function calling gives LLMs power\u2014but not always judgment.",
+  "targetAudience": "AI engineers integrating models into automation flows",
+  "codeExample": true,
+  "risk": "low"
+}

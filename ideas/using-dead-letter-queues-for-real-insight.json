@@ -1,0 +1,13 @@
+{
+  "title": "Using Dead Letter Queues for Real Insight",
+  "topic": "How DLQs help you understand systemic issues rather than just failed messages.",
+  "tags": [
+    "backend",
+    "queues",
+    "reliability"
+  ],
+  "context": "Dead Letter Queues aren't just a safety net\u2014they're a diagnostic tool.",
+  "targetAudience": "Developers building message-driven systems",
+  "codeExample": false,
+  "risk": "low"
+}

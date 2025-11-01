@@ -1,0 +1,10 @@
+{
+    "title": "LLMs Don’t Need Memory, They Need Context Windows",
+    "topic": "Breaks down why long-term memory architectures often fail and how context-window management wins instead.",
+    "tags": ["ai-engineering", "context", "architecture"],
+    "context": "Persistent memory in LLMs is appealing, but context design usually solves 80% of use cases.",
+    "targetAudience": "AI architects and applied researchers",
+    "codeExample": false,
+    "risk": "low"
+  }
+  

@@ -1,0 +1,10 @@
+{
+    "title": "RAG Isn’t Search: Stop Treating It Like One",
+    "topic": "Clarifies why Retrieval-Augmented Generation (RAG) is not equivalent to keyword or vector search, and how to design it accordingly.",
+    "tags": ["ai-engineering", "rag", "llm"],
+    "context": "Many teams treat RAG as simple search + prompt stuffing. This nugget explains why retrieval context design matters more.",
+    "targetAudience": "AI engineers and ML practitioners",
+    "codeExample": false,
+    "risk": "low"
+  }
+  

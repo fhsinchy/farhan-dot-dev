@@ -1,0 +1,13 @@
+{
+  "title": "Monitoring the Monitors",
+  "topic": "Discusses why observability stacks need their own health checks and failure modes.",
+  "tags": [
+    "observability",
+    "devops",
+    "backend"
+  ],
+  "context": "Who watches the watchers? Your metrics system can fail too.",
+  "targetAudience": "SREs and platform engineers",
+  "codeExample": false,
+  "risk": "low"
+}

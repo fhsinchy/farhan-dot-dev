@@ -1,0 +1,13 @@
+{
+  "title": "Cost-Effective Inference Pipelines",
+  "topic": "Shows how to use model routing and batching to optimize LLM costs and latency.",
+  "tags": [
+    "ai-engineering",
+    "llm",
+    "infra"
+  ],
+  "context": "Bigger models don\u2019t have to mean bigger bills.",
+  "targetAudience": "AI engineers deploying LLM services",
+  "codeExample": true,
+  "risk": "low"
+}

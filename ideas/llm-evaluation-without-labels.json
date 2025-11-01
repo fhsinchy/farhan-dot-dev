@@ -1,0 +1,13 @@
+{
+  "title": "LLM Evaluation Without Labels",
+  "topic": "Outlines heuristic and consistency-based evaluation methods for unlabelled data.",
+  "tags": [
+    "ai-engineering",
+    "evaluation",
+    "llm"
+  ],
+  "context": "In fast-moving LLM projects, labeled data often lags behind iterations.",
+  "targetAudience": "AI practitioners running prompt experiments",
+  "codeExample": false,
+  "risk": "low"
+}
