@@ -1,0 +1,13 @@
+{
+  "title": "Schema Drift in NoSQL: The Silent Problem",
+  "topic": "Explains how schema drift sneaks into schemaless databases and how to detect it early.",
+  "tags": [
+    "databases",
+    "backend",
+    "reliability"
+  ],
+  "context": "\u2018Schemaless\u2019 doesn\u2019t mean \u2018structureless\u2019\u2014schemas still evolve silently.",
+  "targetAudience": "Backend engineers using MongoDB or DynamoDB",
+  "codeExample": false,
+  "risk": "low"
+}

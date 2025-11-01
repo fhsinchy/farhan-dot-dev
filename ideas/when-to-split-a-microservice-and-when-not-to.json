@@ -1,0 +1,13 @@
+{
+  "title": "When to Split a Microservice (and When Not To)",
+  "topic": "Discusses criteria for decomposing services without creating a distributed monolith.",
+  "tags": [
+    "microservices",
+    "scaling",
+    "infra"
+  ],
+  "context": "Microservices aren't a silver bullet\u2014splitting too early can slow you down.",
+  "targetAudience": "Backend and DevOps engineers",
+  "codeExample": false,
+  "risk": "low"
+}

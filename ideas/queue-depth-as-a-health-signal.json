@@ -1,0 +1,13 @@
+{
+  "title": "Queue Depth as a Health Signal",
+  "topic": "Describes how monitoring queue depth gives early warnings for load and latency issues.",
+  "tags": [
+    "backend",
+    "observability",
+    "scaling"
+  ],
+  "context": "Queue depth changes faster than user complaints\u2014it\u2019s your early signal.",
+  "targetAudience": "Backend and SRE teams",
+  "codeExample": false,
+  "risk": "low"
+}

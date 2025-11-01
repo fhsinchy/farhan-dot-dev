@@ -1,0 +1,13 @@
+{
+  "title": "Feature Flags as a Safety Mechanism",
+  "topic": "Shows how well-designed feature flags make releases reversible and safe.",
+  "tags": [
+    "backend",
+    "devops",
+    "testing"
+  ],
+  "context": "Flags aren\u2019t just for A/B tests\u2014they\u2019re for survival under pressure.",
+  "targetAudience": "Backend engineers deploying continuously",
+  "codeExample": true,
+  "risk": "low"
+}

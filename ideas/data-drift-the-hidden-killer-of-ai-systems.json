@@ -1,0 +1,13 @@
+{
+  "title": "Data Drift: The Hidden Killer of AI Systems",
+  "topic": "Explains how unnoticed changes in data distribution degrade AI performance and how to monitor for it.",
+  "tags": [
+    "ai-engineering",
+    "evaluation",
+    "reliability"
+  ],
+  "context": "AI systems rarely fail loudly\u2014data drift makes them silently wrong.",
+  "targetAudience": "ML engineers and MLOps practitioners",
+  "codeExample": false,
+  "risk": "medium"
+}

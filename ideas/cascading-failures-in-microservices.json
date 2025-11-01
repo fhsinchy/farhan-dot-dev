@@ -1,0 +1,13 @@
+{
+  "title": "Cascading Failures in Microservices",
+  "topic": "Outlines how to detect and isolate failures before they take down dependent services.",
+  "tags": [
+    "microservices",
+    "reliability",
+    "scaling"
+  ],
+  "context": "One slow service shouldn\u2019t take the rest down with it.",
+  "targetAudience": "SREs and platform engineers",
+  "codeExample": false,
+  "risk": "low"
+}

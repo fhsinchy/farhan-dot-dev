@@ -1,0 +1,13 @@
+{
+  "title": "Embedding Hygiene 101",
+  "topic": "Covers why normalizing, deduplicating, and versioning embeddings matter for reliable RAG systems.",
+  "tags": [
+    "ai-engineering",
+    "rag",
+    "vector-search"
+  ],
+  "context": "Embeddings drift, just like data\u2014bad hygiene breaks retrieval accuracy.",
+  "targetAudience": "Developers maintaining vector databases",
+  "codeExample": false,
+  "risk": "low"
+}

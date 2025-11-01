@@ -1,0 +1,13 @@
+{
+  "title": "The Anatomy of a Safe Database Migration",
+  "topic": "Explains strategies for rolling out schema changes without downtime or data loss.",
+  "tags": [
+    "backend",
+    "databases",
+    "reliability"
+  ],
+  "context": "Even minor schema changes can bring production down if not planned carefully.",
+  "targetAudience": "Backend engineers managing relational databases",
+  "codeExample": false,
+  "risk": "low"
+}
