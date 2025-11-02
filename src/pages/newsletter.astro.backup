@@ -1,18 +1,17 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
+import NewsletterComponent from '../components/Newsletter.astro';
 import Footer from '../components/Footer.astro';
 ---
 
 <Layout title="Newsletter - Farhan Hasin Chowdhury">
 	<div class="min-h-screen bg-background text-foreground">
 		<Header />
-		<main id="main-content" class="flex items-center justify-center min-h-[calc(100vh-200px)]">
-			<div class="text-center px-4">
-				<h1 class="text-4xl md:text-5xl font-bold mb-4">Newsletter</h1>
-				<p class="text-xl md:text-2xl text-muted-foreground">Coming soon...</p>
-			</div>
+		<main id="main-content">
+			<NewsletterComponent />
 		</main>
 		<Footer />
 	</div>
 </Layout>
+
